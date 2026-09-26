@@ -113,22 +113,34 @@ ${SUDO} chmod +x "${INSTALL_DIR}/${BINARY_NAME}"
 
 # 6. Install MinIO Client ('mc') and configure S3 alias
 echo -e "${CYAN}[3/4] Installing MinIO Client ('mc') for S3 operations...${NC}"
-MC_URL="https://dl.min.io/client/mc/release/${PLATFORM}-${TARGET_ARCH}/mc"
-if curl -sLf "${MC_URL}" -o "${TMP_DIR}/mc"; then
-    chmod +x "${TMP_DIR}/mc"
-    ${SUDO} cp "${TMP_DIR}/mc" "${INSTALL_DIR}/mc"
-    ${SUDO} chmod +x "${INSTALL_DIR}/mc"
-    echo -e "${GREEN}[✔] Installed 'mc' to ${INSTALL_DIR}/mc${NC}"
+MC_VERSION="RELEASE.2025-07-16T15-35-03Z"
+case "${PLATFORM}-${TARGET_ARCH}" in
+    linux-amd64)   MC_FILE="mc.linux-amd64.${MC_VERSION}";;
+    linux-arm64)   MC_FILE="mc.linux-arm64.${MC_VERSION}";;
+    darwin-amd64)  MC_FILE="mc.darwin-amd64.${MC_VERSION}";;
+    darwin-arm64)  MC_FILE="mc.darwin-arm64.${MC_VERSION}";;
+    *)             MC_FILE="";;
+esac
 
-    # Configure myminio alias
-    echo -e "${CYAN}[i] Configuring MinIO alias 'myminio' (http://145.241.237.108:9000)...${NC}"
-    "${INSTALL_DIR}/mc" alias set myminio http://145.241.237.108:9000 minioadmin minioadmin123 >/dev/null 2>&1 || true
-    if [ -n "${SUDO}" ]; then
-        ${SUDO} "${INSTALL_DIR}/mc" alias set myminio http://145.241.237.108:9000 minioadmin minioadmin123 >/dev/null 2>&1 || true
+if [ -n "${MC_FILE}" ]; then
+    MC_URL="https://github.com/minio/mc/releases/download/${MC_VERSION}/${MC_FILE}"
+    echo -e "${CYAN}[i] Downloading 'mc' from: ${MC_URL}...${NC}"
+    if curl -sSLf "${MC_URL}" -o "${TMP_DIR}/mc"; then
+        chmod +x "${TMP_DIR}/mc"
+        ${SUDO} cp "${TMP_DIR}/mc" "${INSTALL_DIR}/mc"
+        ${SUDO} chmod +x "${INSTALL_DIR}/mc"
+        echo -e "${GREEN}[✔] Installed 'mc' to ${INSTALL_DIR}/mc${NC}"
+
+        # Configure myminio alias
+        echo -e "${CYAN}[i] Configuring MinIO alias 'myminio' (http://145.241.237.108:9000)...${NC}"
+        "${INSTALL_DIR}/mc" alias set myminio http://145.241.237.108:9000 minioadmin minioadmin123 >/dev/null 2>&1 || true
+        if [ -n "${SUDO}" ]; then
+            ${SUDO} "${INSTALL_DIR}/mc" alias set myminio http://145.241.237.108:9000 minioadmin minioadmin123 >/dev/null 2>&1 || true
+        fi
+        echo -e "${GREEN}[✔] S3 / MinIO alias 'myminio' configured successfully!${NC}"
+    else
+        echo -e "${YELLOW}[!] Note: Could not download 'mc' from ${MC_URL}. 'pilti s3' will auto-install it on first run.${NC}"
     fi
-    echo -e "${GREEN}[✔] S3 / MinIO alias 'myminio' configured successfully!${NC}"
-else
-    echo -e "${YELLOW}[!] Note: Could not pre-fetch 'mc' from ${MC_URL}. 'pilti s3' will auto-install it on first run.${NC}"
 fi
 
 # 7. Verify installation

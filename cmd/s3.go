@@ -61,6 +61,7 @@ func executeMC(mcCmd string, args ...string) error {
 	cfg := s3.GetDefaultConfig()
 	mcPath, err := s3.EnsureMC(cfg)
 	if err != nil {
+		ui.Error("%v", err)
 		return err
 	}
 

@@ -19,6 +19,7 @@ const (
 	DefaultEndpoint  = "http://145.241.237.108:9000"
 	DefaultAccessKey = "minioadmin"
 	DefaultSecretKey = "minioadmin123"
+	MCReleaseVersion = "RELEASE.2025-07-16T15-35-03Z"
 )
 
 // Config represents MinIO/S3 connection parameters.
@@ -54,40 +55,45 @@ func GetDefaultConfig() *Config {
 	return cfg
 }
 
-// GetMCURL returns the official MinIO client download URL based on OS and Architecture.
-func GetMCURL() (string, error) {
+// GetMCURLs returns verified download URLs based on OS and Architecture.
+func GetMCURLs() ([]string, error) {
 	osName := runtime.GOOS
 	arch := runtime.GOARCH
 
+	var filename string
 	switch osName {
 	case "linux":
 		switch arch {
 		case "amd64":
-			return "https://dl.min.io/client/mc/release/linux-amd64/mc", nil
+			filename = fmt.Sprintf("mc.linux-amd64.%s", MCReleaseVersion)
 		case "arm64":
-			return "https://dl.min.io/client/mc/release/linux-arm64/mc", nil
-		case "arm":
-			return "https://dl.min.io/client/mc/release/linux-arm/mc", nil
+			filename = fmt.Sprintf("mc.linux-arm64.%s", MCReleaseVersion)
 		default:
-			return "", fmt.Errorf("unsupported linux architecture: %s", arch)
+			return nil, fmt.Errorf("unsupported linux architecture: %s", arch)
 		}
 	case "darwin":
 		switch arch {
 		case "arm64":
-			return "https://dl.min.io/client/mc/release/darwin-arm64/mc", nil
+			filename = fmt.Sprintf("mc.darwin-arm64.%s", MCReleaseVersion)
 		case "amd64":
-			return "https://dl.min.io/client/mc/release/darwin-amd64/mc", nil
+			filename = fmt.Sprintf("mc.darwin-amd64.%s", MCReleaseVersion)
 		default:
-			return "", fmt.Errorf("unsupported darwin architecture: %s", arch)
+			return nil, fmt.Errorf("unsupported darwin architecture: %s", arch)
 		}
 	case "windows":
 		if arch == "amd64" {
-			return "https://dl.min.io/client/mc/release/windows-amd64/mc.exe", nil
+			filename = fmt.Sprintf("mc.windows-amd64.%s.exe", MCReleaseVersion)
+		} else {
+			return nil, fmt.Errorf("unsupported windows architecture: %s", arch)
 		}
-		return "", fmt.Errorf("unsupported windows architecture: %s", arch)
 	default:
-		return "", fmt.Errorf("unsupported OS: %s", osName)
+		return nil, fmt.Errorf("unsupported OS: %s", osName)
 	}
+
+	urls := []string{
+		fmt.Sprintf("https://github.com/minio/mc/releases/download/%s/%s", MCReleaseVersion, filename),
+	}
+	return urls, nil
 }
 
 // FindMCExecutable checks PATH and standard installation paths for mc.
@@ -150,22 +156,44 @@ func EnsureMC(cfg *Config) (string, error) {
 
 // InstallMC downloads and installs the official MinIO client binary for the host OS/Arch.
 func InstallMC() (string, error) {
-	downloadURL, err := GetMCURL()
+	urls, err := GetMCURLs()
 	if err != nil {
 		return "", err
 	}
 
-	ui.Info("Downloading 'mc' from: %s", downloadURL)
-	client := &http.Client{Timeout: 30 * time.Second}
-	resp, err := client.Get(downloadURL)
-	if err != nil {
-		return "", fmt.Errorf("network error downloading mc: %w", err)
+	client := &http.Client{Timeout: 180 * time.Second}
+	var lastErr error
+	var resp *http.Response
+
+	for _, downloadURL := range urls {
+		ui.Info("Downloading 'mc' from: %s", downloadURL)
+		req, rErr := http.NewRequest("GET", downloadURL, nil)
+		if rErr != nil {
+			lastErr = rErr
+			continue
+		}
+		req.Header.Set("User-Agent", "curl/7.88.1")
+
+		r, getErr := client.Do(req)
+		if getErr != nil {
+			lastErr = fmt.Errorf("network error downloading mc: %w", getErr)
+			continue
+		}
+
+		if r.StatusCode != http.StatusOK {
+			r.Body.Close()
+			lastErr = fmt.Errorf("server returned HTTP %d while downloading mc from %s", r.StatusCode, downloadURL)
+			continue
+		}
+
+		resp = r
+		break
+	}
+
+	if resp == nil {
+		return "", fmt.Errorf("failed to download mc binary: %v", lastErr)
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("server returned HTTP %d while downloading mc", resp.StatusCode)
-	}
 
 	var targetPath string
 	if runtime.GOOS == "windows" {
