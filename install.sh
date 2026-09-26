@@ -111,15 +111,37 @@ ${SUDO} mkdir -p "${INSTALL_DIR}"
 ${SUDO} cp "${TMP_DIR}/${BINARY_NAME}" "${INSTALL_DIR}/${BINARY_NAME}"
 ${SUDO} chmod +x "${INSTALL_DIR}/${BINARY_NAME}"
 
-# 6. Verify installation
-echo -e "${CYAN}[3/3] Verifying installation...${NC}"
+# 6. Install MinIO Client ('mc') and configure S3 alias
+echo -e "${CYAN}[3/4] Installing MinIO Client ('mc') for S3 operations...${NC}"
+MC_URL="https://dl.min.io/client/mc/release/${PLATFORM}-${TARGET_ARCH}/mc"
+if curl -sLf "${MC_URL}" -o "${TMP_DIR}/mc"; then
+    chmod +x "${TMP_DIR}/mc"
+    ${SUDO} cp "${TMP_DIR}/mc" "${INSTALL_DIR}/mc"
+    ${SUDO} chmod +x "${INSTALL_DIR}/mc"
+    echo -e "${GREEN}[✔] Installed 'mc' to ${INSTALL_DIR}/mc${NC}"
+
+    # Configure myminio alias
+    echo -e "${CYAN}[i] Configuring MinIO alias 'myminio' (http://145.241.237.108:9000)...${NC}"
+    "${INSTALL_DIR}/mc" alias set myminio http://145.241.237.108:9000 minioadmin minioadmin123 >/dev/null 2>&1 || true
+    if [ -n "${SUDO}" ]; then
+        ${SUDO} "${INSTALL_DIR}/mc" alias set myminio http://145.241.237.108:9000 minioadmin minioadmin123 >/dev/null 2>&1 || true
+    fi
+    echo -e "${GREEN}[✔] S3 / MinIO alias 'myminio' configured successfully!${NC}"
+else
+    echo -e "${YELLOW}[!] Note: Could not pre-fetch 'mc' from ${MC_URL}. 'pilti s3' will auto-install it on first run.${NC}"
+fi
+
+# 7. Verify installation
+echo -e "${CYAN}[4/4] Verifying installation...${NC}"
 if command -v "${BINARY_NAME}" >/dev/null 2>&1; then
     echo -e "${GREEN}${BOLD}✔ Successfully installed '${BINARY_NAME}' to ${INSTALL_DIR}/${BINARY_NAME}!${NC}"
     echo ""
     "${BINARY_NAME}" version
     echo ""
     echo -e "Run ${BOLD}'pilti list'${NC} to view all software components."
-    echo -e "Run ${BOLD}'pilti --help'${NC} or ${BOLD}'pilti doctor'${NC} to get started."
+    echo -e "Run ${BOLD}'pilti s3 ls'${NC} to view S3 buckets."
+    echo -e "Run ${BOLD}'pilti s3 --help'${NC} to explore AWS S3-compatible commands."
+    echo -e "Run ${BOLD}'pilti doctor'${NC} to check system health."
 else
     echo -e "${YELLOW}[!] '${BINARY_NAME}' installed to ${INSTALL_DIR}, but ${INSTALL_DIR} is not in your current PATH.${NC}"
     echo -e "Add it to your shell configuration (.bashrc, .zshrc):"

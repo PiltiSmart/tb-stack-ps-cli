@@ -151,3 +151,36 @@ Launch an interactive menu to choose software and actions:
 ```bash
 pilti install
 ```
+
+---
+
+## 🪣 AWS S3 Cloud Storage CLI (`pilti s3`)
+
+`pilti` includes an AWS S3-compatible cloud storage CLI powered by the **MinIO Client (`mc`)** engine.
+It connects out-of-the-box to the PiltiSmart MinIO Object Storage server at `http://145.241.237.108:9000` with the `myminio` alias, allowing full CRUD operations using familiar AWS S3 CLI syntax.
+
+### 1. Show S3 Overview & Available Commands
+```bash
+pilti s3
+# or
+pilti s3 --help
+```
+
+### 2. S3 Operations & CRUD Examples
+
+| Operation | Command | Description |
+|---|---|---|
+| **List Buckets** | `pilti s3 ls` | Lists all buckets on MinIO |
+| **List Objects** | `pilti s3 ls s3://mybucket` | Lists objects inside `mybucket` |
+| **Make Bucket** | `pilti s3 mb s3://mybucket` | Creates a new S3 bucket |
+| **Remove Bucket** | `pilti s3 rb s3://mybucket [--force]` | Deletes an S3 bucket |
+| **Upload File** | `pilti s3 cp ./data.csv s3://mybucket/` | Copies local file to S3 |
+| **Download File** | `pilti s3 cp s3://mybucket/data.csv ./` | Copies S3 object to local disk |
+| **Recursive Copy** | `pilti s3 cp ./dist s3://mybucket/dist -r` | Recursively uploads directory |
+| **Read Object** | `pilti s3 cat s3://mybucket/config.json` | Displays object content to stdout |
+| **Object Metadata** | `pilti s3 stat s3://mybucket/data.csv` | Displays size, ETags, and metadata |
+| **Sync / Mirror** | `pilti s3 sync ./backup s3://mybucket/backup` | Synchronizes directory with S3 |
+| **Delete Object** | `pilti s3 rm s3://mybucket/data.csv` | Removes an object from S3 |
+| **Setup & Verify** | `pilti s3 setup` | Verifies `mc` binary and registers alias |
+| **Configuration** | `pilti s3 config` | Displays active endpoint & credentials |
+

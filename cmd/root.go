@@ -46,6 +46,7 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(catalogCmd)
 	rootCmd.AddCommand(stackCmd)
+	rootCmd.AddCommand(s3Cmd)
 
 	// Individual software commands (pilti tb-app, pilti jenkins, etc.)
 	RegisterSoftwareCommands(rootCmd)
