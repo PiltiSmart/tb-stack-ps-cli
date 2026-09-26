@@ -1,0 +1,35 @@
+version: '3.8'
+services:
+  mytbedge:
+    restart: always
+    image: "thingsboard/tb-edge:3.9.1EDGE"
+    ports:
+      - "8080:8080"
+      - "${EDGE_MQTT_PORT:-1884}:1883"
+      - "5683-5688:5683-5688/udp"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tb-edge
+      CLOUD_ROUTING_KEY: b07812d7-4641-cfcb-ea03-02d39079a1eb
+      CLOUD_ROUTING_SECRET: x2kw2qewx262369fnybk
+      CLOUD_RPC_HOST: 192.168.0.126
+    volumes:
+      - tb-edge-data:/data
+      - tb-edge-logs:/var/log/tb-edge
+  postgres:
+    restart: always
+    image: "postgres:15"
+    ports:
+      - "5432"
+    environment:
+      POSTGRES_DB: tb-edge
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - tb-edge-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  tb-edge-data:
+    name: tb-edge-data
+  tb-edge-logs:
+    name: tb-edge-logs
+  tb-edge-postgres-data:
+    name: tb-edge-postgres-data

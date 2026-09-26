@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  piltiCloud:
+    image: piltismartsolutions/pilticloud:v8.4.41
+    container_name: piltiCloud
+    ports:
+      - 80:80
+    env_file:
+      - ./.pmx.env
+#    working_dir: /app
+#    volumes:
+#      - ./logs:/app/logs
+    restart: always

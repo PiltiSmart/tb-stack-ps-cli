@@ -1,0 +1,85 @@
+name: Release Pilti CLI
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build-and-release:
+    name: Build and Release Binaries
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+            binary_name: pilti-linux-amd64
+          - goos: linux
+            goarch: arm64
+            binary_name: pilti-linux-arm64
+          - goos: darwin
+            goarch: amd64
+            binary_name: pilti-darwin-amd64
+          - goos: darwin
+            goarch: arm64
+            binary_name: pilti-darwin-arm64
+          - goos: windows
+            goarch: amd64
+            binary_name: pilti-windows-amd64.exe
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Build Binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          mkdir -p dist
+          go mod tidy
+          go build -ldflags="-s -w" -o dist/${{ matrix.binary_name }} main.go
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.binary_name }}
+          path: dist/${{ matrix.binary_name }}
+
+  publish-release:
+    name: Publish Release on GitHub
+    needs: build-and-release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist/
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/pilti-linux-amd64
+            dist/pilti-linux-arm64
+            dist/pilti-darwin-amd64
+            dist/pilti-darwin-arm64
+            dist/pilti-windows-amd64.exe
+          generate_release_notes: true

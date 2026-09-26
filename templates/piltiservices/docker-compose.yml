@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  piltiservice:
+    image: piltismartsolutions/piltiservices:v7.10.7
+    container_name: piltiservices-test
+  #  security_opt:
+   #   - apparmor:unconfined
+    ports:
+      - "80:80"
+    env_file:
+      - ./.piltiservices.env
+    volumes:
+      - ./logs:/app/logs
+    restart: always
+    healthcheck:
+      # Command to run. If it returns 200 OK, the container is healthy.
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:80/pilti/piltiUrls"]
+      interval: 10s       # How often to check
+      timeout: 5s         # How long to wait for a response before failing
+      retries: 5          # How many consecutive failures mean it's "unhealthy"
+      start_period: 45s

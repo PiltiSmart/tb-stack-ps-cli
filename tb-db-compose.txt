@@ -1,0 +1,16 @@
+version: '3.8'
+services:
+  timescaledb:
+    image: timescale/timescaledb-ha:pg17
+    container_name: Test-timescaledb
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: qwer1234
+      POSTGRES_USER: postgres
+      POSTGRES_DB: thingsboard
+      PGDATA: /var/lib/postgresql/data/pgdata
+    command: postgres -c shared_preload_libraries=pg_stat_statements,timescaledb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./timescale_data:/var/lib/postgresql/data
