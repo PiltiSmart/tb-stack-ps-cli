@@ -24,13 +24,11 @@ services:
       - ./timescale_data:/var/lib/postgresql/data
 `
 
-const RawTbAppCompose = `version: '3.8'
-services:
+const RawTbAppCompose = `services:
   tb-app:
     image: piltismartsolutions/thingsboard-3.8.1:v-4.1.2
     container_name: Thingsboard-test
     ports:
-      - "80:80"
       - "8080:8080"
       - "1883:1883"
       - "7070:7070"
@@ -46,8 +44,7 @@ INFISICAL_URL=https://eu.infisical.com
 INFISICAL_ENV=test
 `
 
-const RawTbEdgeCompose = `version: '3.8'
-services:
+const RawTbEdgeCompose = `services:
   mytbedge:
     restart: always
     image: "thingsboard/tb-edge:3.9.1EDGE"
@@ -84,15 +81,14 @@ volumes:
     name: tb-edge-postgres-data
 `
 
-const RawJenkinsCompose = `version: '3.8'
-services:
+const RawJenkinsCompose = `services:
   jenkins:
     image: jenkins/jenkins:lts
     container_name: jenkins
     privileged: true
     user: root
     ports:
-      - "80:8080"
+      - "8085:8080"
       - "50000:50000"
     volumes:
       - ./data:/var/jenkins_home
@@ -100,16 +96,14 @@ services:
     restart: always
 `
 
-const RawPiltiServicesCompose = `version: '3.8'
-
-services:
+const RawPiltiServicesCompose = `services:
   piltiservice:
     image: piltismartsolutions/piltiservices:v7.10.7
     container_name: piltiservices-test
   #  security_opt:
    #   - apparmor:unconfined
     ports:
-      - "80:80"
+      - "9000:80"
     env_file:
       - ./.piltiservices.env
     volumes:
@@ -131,8 +125,7 @@ INFISICAL_SITE_URL=https://eu.infisical.com
 INFISICAL_ENV=test
 `
 
-const RawKafkaCompose = `version: '3.8'
-services:
+const RawKafkaCompose = `services:
   kafka:
     image: apache/kafka:4.1.1
     container_name: kafka
@@ -157,13 +150,12 @@ volumes:
   kafka_data:
 `
 
-const RawPiltiCloudCompose = `version: '3.8'
-services:
+const RawPiltiCloudCompose = `services:
   piltiCloud:
     image: piltismartsolutions/pilticloud:v8.4.41
     container_name: piltiCloud
     ports:
-      - "80:80"
+      - "8088:80"
     env_file:
       - ./.pmx.env
 #    working_dir: /app

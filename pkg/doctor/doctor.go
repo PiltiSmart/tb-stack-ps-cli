@@ -124,13 +124,16 @@ func RunDiagnostics() bool {
 		Desc string
 	}{
 		{5432, "tb-db (TimescaleDB / PostgreSQL)"},
-		{80, "HTTP / Web UI (tb-app / jenkins / piltiservices / pilticloud)"},
-		{8080, "tb-app (ThingsBoard Alternate HTTP)"},
-		{1883, "tb-app (ThingsBoard Core MQTT)"},
+		{8080, "tb-app (ThingsBoard Core Web UI)"},
+		{1883, "tb-app (ThingsBoard Core MQTT Broker)"},
+		{7070, "tb-app (ThingsBoard Core RPC)"},
 		{8082, "tb-edge (ThingsBoard Edge Web UI)"},
 		{1884, "tb-edge (ThingsBoard Edge MQTT)"},
-		{9092, "kafka (Apache Kafka PLAINTEXT Broker)"},
+		{8085, "jenkins (Jenkins Web UI)"},
 		{50000, "jenkins (Jenkins Agent Listener)"},
+		{9000, "piltiservices (API Gateway)"},
+		{9092, "kafka (Apache Kafka PLAINTEXT Broker)"},
+		{8088, "pilticloud (Cloud Gateway / PMX)"},
 	}
 
 	fmt.Printf("\n[Dependency & Component Checks]\n")
