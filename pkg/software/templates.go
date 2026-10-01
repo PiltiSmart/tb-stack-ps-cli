@@ -13,8 +13,8 @@ services:
     container_name: tb-timescaledb
     restart: always
     environment:
-      POSTGRES_PASSWORD: qwer1234
-      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_postgres_password
+      POSTGRES_USER: your_postgres_user
       POSTGRES_DB: thingsboard
       PGDATA: /var/lib/postgresql/data/pgdata
     command: postgres -c shared_preload_libraries=pg_stat_statements,timescaledb
@@ -37,9 +37,9 @@ const RawTbAppCompose = `services:
     restart: always
 `
 
-const RawTbEnv = `INFISICAL_CLIENT_ID=0c4a1a06-34d9-4500-b900-3ceed9aaa660
-INFISICAL_CLIENT_SECRET=d0d09ace072d03670826f4d99673f8b6469f61e39470f15103f0510eea3e89ae
-INFISICAL_PROJECT_ID=47146ccc-417e-4b8b-9a4c-443e2534b82e
+const RawTbEnv = `INFISICAL_CLIENT_ID=your_infisical_client_id
+INFISICAL_CLIENT_SECRET=your_infisical_client_secret
+INFISICAL_PROJECT_ID=your_infisical_project_id
 INFISICAL_URL=https://eu.infisical.com
 INFISICAL_ENV=test
 `
@@ -55,9 +55,9 @@ const RawTbEdgeCompose = `services:
       - "5683-5688:5683-5688/udp"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tb-edge
-      CLOUD_ROUTING_KEY: b07812d7-4641-cfcb-ea03-02d39079a1eb
-      CLOUD_ROUTING_SECRET: x2kw2qewx262369fnybk
-      CLOUD_RPC_HOST: 192.168.0.126
+      CLOUD_ROUTING_KEY: your_cloud_routing_key
+      CLOUD_ROUTING_SECRET: your_cloud_routing_secret
+      CLOUD_RPC_HOST: your_cloud_rpc_host
     volumes:
       - tb-edge-data:/data
       - tb-edge-logs:/var/log/tb-edge
@@ -68,7 +68,7 @@ const RawTbEdgeCompose = `services:
       - "5433:5432"
     environment:
       POSTGRES_DB: tb-edge
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: your_postgres_password
     volumes:
       - tb-edge-postgres-data:/var/lib/postgresql/data
 
@@ -111,16 +111,16 @@ const RawPiltiServicesCompose = `services:
     restart: always
     healthcheck:
       # Command to run. If it returns 200 OK, the container is healthy.
-      test: ["CMD", "curl", "-f", "http://127.0.0.1:80/pilti/piltiUrls"]
+      test: ["CMD", "curl", "-f", "http://localhost:80/pilti/piltiUrls"]
       interval: 10s       # How often to check
       timeout: 5s         # How long to wait for a response before failing
       retries: 5          # How many consecutive failures mean it's "unhealthy"
       start_period: 45s
 `
 
-const RawPiltiServicesEnv = `INFISICAL_CLIENT_ID=0c4a1a06-34d9-4500-b900-3ceed9aaa660
-INFISICAL_CLIENT_SECRET=d0d09ace072d03670826f4d99673f8b6469f61e39470f15103f0510eea3e89ae
-INFISICAL_PROJECT_ID=47146ccc-417e-4b8b-9a4c-443e2534b82e
+const RawPiltiServicesEnv = `INFISICAL_CLIENT_ID=your_infisical_client_id
+INFISICAL_CLIENT_SECRET=your_infisical_client_secret
+INFISICAL_PROJECT_ID=your_infisical_project_id
 INFISICAL_SITE_URL=https://eu.infisical.com
 INFISICAL_ENV=test
 `
@@ -136,7 +136,7 @@ const RawKafkaCompose = `services:
       KAFKA_PROCESS_ROLES: "broker,controller"
       KAFKA_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
       KAFKA_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093"
-      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://10.70.70.4:9092"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://localhost:9092"
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT"
       KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
@@ -164,12 +164,12 @@ const RawPiltiCloudCompose = `services:
     restart: always
 `
 
-const RawPiltiCloudEnv = `INFISICAL_CLIENT_ID=0c4a1a06-34d9-4500-b900-3ceed9aaa660
-INFISICAL_CLIENT_SECRET=d0d09ace072d03670826f4d99673f8b6469f61e39470f15103f0510eea3e89ae
-INFISICAL_PROJECT_ID=47146ccc-417e-4b8b-9a4c-443e2534b82e
+const RawPiltiCloudEnv = `INFISICAL_CLIENT_ID=your_infisical_client_id
+INFISICAL_CLIENT_SECRET=your_infisical_client_secret
+INFISICAL_PROJECT_ID=your_infisical_project_id
 INFISICAL_SITE_URL=https://eu.infisical.com
 INFISICAL_ENV=test
-KAFKA_SERVER=10.70.70.4:9092
+KAFKA_SERVER=localhost:9092
 `
 
 // WriteTemplates provisions the configuration and compose files for a given software.

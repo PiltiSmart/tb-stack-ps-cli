@@ -157,7 +157,7 @@ pilti install
 ## 🪣 AWS S3 Cloud Storage CLI (`pilti s3`)
 
 `pilti` includes an AWS S3-compatible cloud storage CLI powered by the **MinIO Client (`mc`)** engine.
-It connects out-of-the-box to the PiltiSmart MinIO Object Storage server at `http://145.241.237.108:9000` with the `myminio` alias, allowing full CRUD operations using familiar AWS S3 CLI syntax.
+It connects out-of-the-box to the PiltiSmart MinIO Object Storage server at `http://localhost:9000` with the `myminio` alias, allowing full CRUD operations using familiar AWS S3 CLI syntax.
 
 ### 1. Show S3 Overview & Available Commands
 ```bash

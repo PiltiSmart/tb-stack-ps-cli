@@ -62,7 +62,7 @@ func InstallTBStack(deployDir, repoURL string, edgeWebPort, edgeMqttPort int) er
 		return fmt.Errorf("failed to start tb-db: %w", err)
 	}
 	ui.Success("TimescaleDB container started! Waiting for database readiness on port 5432...")
-	if err := waitForPort("127.0.0.1", 5432, 25*time.Second); err != nil {
+	if err := waitForPort("localhost", 5432, 25*time.Second); err != nil {
 		ui.Warning("Database port 5432 probe timed out, continuing...")
 	} else {
 		ui.Success("Database is listening on port 5432!")
@@ -182,7 +182,7 @@ func PrintSummary(deployDir string, edgeWebPort, edgeMqttPort int) {
 	fmt.Printf("  %-30s : %shttp://<node-ip>:%d%s\n", "ThingsBoard Edge Web UI", ui.ColorCyan, edgeWebPort, ui.ColorReset)
 	fmt.Printf("  %-30s : %sport 1883%s\n", "ThingsBoard Core MQTT Broker", ui.ColorGreen, ui.ColorReset)
 	fmt.Printf("  %-30s : %sport %d%s\n", "ThingsBoard Edge MQTT Port", ui.ColorGreen, edgeMqttPort, ui.ColorReset)
-	fmt.Printf("  %-30s : %sport 5432 (user: postgres, db: thingsboard)%s\n", "TimescaleDB Storage Port", ui.ColorGreen, ui.ColorReset)
+	fmt.Printf("  %-30s : %sport 5432 (user: your_postgres_user, db: thingsboard)%s\n", "TimescaleDB Storage Port", ui.ColorGreen, ui.ColorReset)
 	fmt.Printf("  %-30s : %s%s%s\n", "Deployment Directory", ui.ColorBold, deployDir, ui.ColorReset)
 	fmt.Println("==================================================================")
 }

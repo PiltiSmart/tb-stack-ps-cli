@@ -16,9 +16,9 @@ import (
 
 const (
 	DefaultAlias     = "myminio"
-	DefaultEndpoint  = "http://145.241.237.108:9000"
-	DefaultAccessKey = "minioadmin"
-	DefaultSecretKey = "minioadmin123"
+	DefaultEndpoint  = "http://localhost:9000"
+	DefaultAccessKey = "your_access_key"
+	DefaultSecretKey = "your_secret_key"
 	MCReleaseVersion = "RELEASE.2025-07-16T15-35-03Z"
 )
 

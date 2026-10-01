@@ -14,7 +14,7 @@ var s3Cmd = &cobra.Command{
 	Short: "AWS S3-compatible cloud storage operations (powered by MinIO)",
 	Long: `==================================================================
   PiltiSmart S3 Cloud Storage CLI (MinIO Engine)
-  Target Endpoint: http://145.241.237.108:9000 | Alias: myminio
+  Target Endpoint: http://localhost:9000 | Alias: myminio
 ==================================================================
 
 Full AWS S3-like CRUD command suite backed by high-performance MinIO.

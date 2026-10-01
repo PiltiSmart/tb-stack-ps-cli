@@ -23,7 +23,7 @@ curl -fsSL https://raw.githubusercontent.com/PiltiSmart/stack-catalog/feat/add-e
 2. Detects your CPU architecture (**x86_64 / md64** or **rm64**).
 3. Downloads the official pre-compiled static pilti binary from GitHub Releases.
 4. Places the executable into /usr/local/bin/pilti (and creates symlink /usr/local/bin/ps).
-5. Installs MinIO Client (mc) and configures myminio alias to http://145.241.237.108:9000.
+5. Installs MinIO Client (mc) and configures myminio alias to http://localhost:9000.
 6. Verifies installation by running pilti version.
 
 ---
@@ -63,7 +63,7 @@ pilti list
 
 ## 🪣 S3 Cloud Storage CLI Setup & Verification
 
-The installer automatically downloads the official **MinIO Client (mc)** and configures the myminio alias to point to http://145.241.237.108:9000:
+The installer automatically downloads the official **MinIO Client (mc)** and configures the myminio alias to point to http://localhost:9000:
 
 `ash
 # Verify S3 connection and list buckets

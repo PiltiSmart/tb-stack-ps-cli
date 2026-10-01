@@ -9,9 +9,9 @@ services:
       - "5683-5688:5683-5688/udp"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tb-edge
-      CLOUD_ROUTING_KEY: b07812d7-4641-cfcb-ea03-02d39079a1eb
-      CLOUD_ROUTING_SECRET: x2kw2qewx262369fnybk
-      CLOUD_RPC_HOST: 192.168.0.126
+      CLOUD_ROUTING_KEY: your_cloud_routing_key
+      CLOUD_ROUTING_SECRET: your_cloud_routing_secret
+      CLOUD_RPC_HOST: your_cloud_rpc_host
     volumes:
       - tb-edge-data:/data
       - tb-edge-logs:/var/log/tb-edge
@@ -22,7 +22,7 @@ services:
       - "5432"
     environment:
       POSTGRES_DB: tb-edge
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: your_postgres_password
     volumes:
       - tb-edge-postgres-data:/var/lib/postgresql/data
 

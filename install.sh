@@ -132,10 +132,10 @@ if [ -n "${MC_FILE}" ]; then
         echo -e "${GREEN}[✔] Installed 'mc' to ${INSTALL_DIR}/mc${NC}"
 
         # Configure myminio alias
-        echo -e "${CYAN}[i] Configuring MinIO alias 'myminio' (http://145.241.237.108:9000)...${NC}"
-        "${INSTALL_DIR}/mc" alias set myminio http://145.241.237.108:9000 minioadmin minioadmin123 >/dev/null 2>&1 || true
+        echo -e "${CYAN}[i] Configuring MinIO alias 'myminio' (${MINIO_ENDPOINT:-http://localhost:9000})...${NC}"
+        "${INSTALL_DIR}/mc" alias set myminio "${MINIO_ENDPOINT:-http://localhost:9000}" "${MINIO_ACCESS_KEY:-your_access_key}" "${MINIO_SECRET_KEY:-your_secret_key}" >/dev/null 2>&1 || true
         if [ -n "${SUDO}" ]; then
-            ${SUDO} "${INSTALL_DIR}/mc" alias set myminio http://145.241.237.108:9000 minioadmin minioadmin123 >/dev/null 2>&1 || true
+            ${SUDO} "${INSTALL_DIR}/mc" alias set myminio "${MINIO_ENDPOINT:-http://localhost:9000}" "${MINIO_ACCESS_KEY:-your_access_key}" "${MINIO_SECRET_KEY:-your_secret_key}" >/dev/null 2>&1 || true
         fi
         echo -e "${GREEN}[✔] S3 / MinIO alias 'myminio' configured successfully!${NC}"
     else

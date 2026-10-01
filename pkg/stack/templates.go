@@ -7,8 +7,8 @@ services:
     container_name: Test-timescaledb
     restart: always
     environment:
-      POSTGRES_PASSWORD: qwer1234
-      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: your_postgres_password
+      POSTGRES_USER: your_postgres_user
       POSTGRES_DB: thingsboard
       PGDATA: /var/lib/postgresql/data/pgdata
     command: postgres -c shared_preload_libraries=pg_stat_statements,timescaledb
@@ -33,9 +33,9 @@ services:
     restart: always
 `
 
-const RawTbEnv = `INFISICAL_CLIENT_ID=0c4a1a06-34d9-4500-b900-3ceed9aaa660
-INFISICAL_CLIENT_SECRET=d0d09ace072d03670826f4d99673f8b6469f61e39470f15103f0510eea3e89ae
-INFISICAL_PROJECT_ID=47146ccc-417e-4b8b-9a4c-443e2534b82e
+const RawTbEnv = `INFISICAL_CLIENT_ID=your_infisical_client_id
+INFISICAL_CLIENT_SECRET=your_infisical_client_secret
+INFISICAL_PROJECT_ID=your_infisical_project_id
 INFISICAL_URL=https://eu.infisical.com
 INFISICAL_ENV=test
 `
@@ -51,9 +51,9 @@ services:
       - "5683-5688:5683-5688/udp"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/tb-edge
-      CLOUD_ROUTING_KEY: b07812d7-4641-cfcb-ea03-02d39079a1eb
-      CLOUD_ROUTING_SECRET: x2kw2qewx262369fnybk
-      CLOUD_RPC_HOST: 192.168.0.126
+      CLOUD_ROUTING_KEY: your_cloud_routing_key
+      CLOUD_ROUTING_SECRET: your_cloud_routing_secret
+      CLOUD_RPC_HOST: your_cloud_rpc_host
     volumes:
       - tb-edge-data:/data
       - tb-edge-logs:/var/log/tb-edge
@@ -64,7 +64,7 @@ services:
       - "5432"
     environment:
       POSTGRES_DB: tb-edge
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: your_postgres_password
     volumes:
       - tb-edge-postgres-data:/var/lib/postgresql/data
 
