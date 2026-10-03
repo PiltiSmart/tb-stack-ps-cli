@@ -16,17 +16,17 @@ const (
 )
 
 const AsciiLogo = `
-  ____  ____    ____ _     ___ 
- |  _ \/ ___|  / ___| |   |_ _|
- | |_) \___ \ | |   | |    | | 
- |  __/ ___) || |___| |___ | | 
- |_|   |____/  \____|_____|___|
+  ____  ___ _     _____ ___     ____ _     ___ 
+ |  _ \|_ _| |   |_   _|_ _|   / ___| |   |_ _|
+ | |_) || || |     | |  | |   | |   | |    | | 
+ |  __/ | || |___  | |  | |   | |___| |___ | | 
+ |_|   |___|_____| |_| |___|   \____|_____|___|
 `
 
 func PrintBanner(subtitle string) {
 	fmt.Println("==================================================================")
 	fmt.Printf("%s%s%s\n", ColorCyan, AsciiLogo, ColorReset)
-	fmt.Printf("  %s%s%s %s(ThingsBoard Stack Phase 1)%s\n", ColorBold, subtitle, ColorReset, ColorDim, ColorReset)
+	fmt.Printf("  %s%s%s\n", ColorBold, subtitle, ColorReset)
 	fmt.Println("==================================================================")
 }
 
