@@ -11,13 +11,17 @@ import (
 
 var (
 	softwareBaseDir string
+	softwarePort    int
+	softwareVersion string
+	softwareAutoYes bool
 	logFollow       bool
 )
 
 func createSoftwareCommand(s software.Software) *cobra.Command {
 	swCmd := &cobra.Command{
-		Use:   s.ID,
-		Short: fmt.Sprintf("Manage %s (%s)", s.Name, s.Category),
+		Use:     s.ID,
+		Aliases: s.Aliases,
+		Short:   fmt.Sprintf("Manage %s (%s)", s.Name, s.Category),
 		Long: fmt.Sprintf(`Manage %s.
 Category: %s
 Default Ports: %v
@@ -38,13 +42,22 @@ Description: %s`, s.Name, s.Category, s.DefaultPorts, s.Description),
 		Use:   "install",
 		Short: fmt.Sprintf("Install and run %s", s.Name),
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := software.Install(&s, softwareBaseDir); err != nil {
+			opts := software.InstallOptions{
+				BaseDir: softwareBaseDir,
+				Version: softwareVersion,
+				Port:    softwarePort,
+				AutoYes: softwareAutoYes,
+			}
+			if err := software.InstallWithOptions(&s, opts); err != nil {
 				ui.Error("Failed to install %s: %v", s.ID, err)
 				os.Exit(1)
 			}
 		},
 	}
 	installCmd.Flags().StringVarP(&softwareBaseDir, "dir", "d", software.DefaultBaseDir, "Base installation directory")
+	installCmd.Flags().IntVarP(&softwarePort, "port", "p", 0, "Custom host port number")
+	installCmd.Flags().StringVarP(&softwareVersion, "version", "v", "", "Custom software version tag")
+	installCmd.Flags().BoolVarP(&softwareAutoYes, "yes", "y", false, "Automatically accept defaults without interactive prompts")
 
 	statusCmd := &cobra.Command{
 		Use:   "status",

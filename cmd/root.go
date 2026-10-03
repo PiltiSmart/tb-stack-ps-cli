@@ -20,7 +20,7 @@ var rootCmd = &cobra.Command{
   - jenkins       (Jenkins CI/CD Automation Engine)
   - piltiservices (PiltiSmart Microservices)
   - kafka         (Apache Kafka Broker)
-  - pilticloud    (PiltiSmart Cloud Gateway / PMX)
+  - pulseX        (PulseX Cloud Gateway / PMX - formerly PiltiCloud)
 ==================================================================`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ui.PrintBanner("PiltiSmart Software Management Engine")

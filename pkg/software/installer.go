@@ -1,6 +1,7 @@
 package software
 
 import (
+	"bufio"
 	"fmt"
 	"net"
 	"os"
@@ -14,8 +15,21 @@ import (
 
 const DefaultBaseDir = "/opt/piltismart"
 
-// Install provisions configuration and starts containers for a given software.
+type InstallOptions struct {
+	BaseDir string
+	Version string
+	Port    int
+	AutoYes bool
+}
+
+// Install provisions configuration and starts containers for a given software using interactive prompts.
 func Install(s *Software, baseDir string) error {
+	return InstallWithOptions(s, InstallOptions{BaseDir: baseDir})
+}
+
+// InstallWithOptions provisions configuration with full interactive or parameterized options.
+func InstallWithOptions(s *Software, opts InstallOptions) error {
+	baseDir := opts.BaseDir
 	if baseDir == "" {
 		baseDir = DefaultBaseDir
 	}
@@ -24,7 +38,7 @@ func Install(s *Software, baseDir string) error {
 	ui.PrintBanner(fmt.Sprintf("Installing PiltiSmart Software: %s", s.Name))
 	ui.Info("Identifier : %s%s%s", ui.ColorCyan, s.ID, ui.ColorReset)
 	ui.Info("Directory  : %s", targetDir)
-	ui.Info("Ports      : %s", strings.Join(s.DefaultPorts, ", "))
+	ui.Info("Default Ports : %s", strings.Join(s.DefaultPorts, ", "))
 
 	// Check dependencies if any
 	for _, depID := range s.Dependencies {
@@ -47,13 +61,54 @@ func Install(s *Software, baseDir string) error {
 		}
 	}
 
-	// Write templates
+	reader := bufio.NewReader(os.Stdin)
+
+	// 1. Version Selection (for PulseX / PiltiCloud)
+	chosenVersion := opts.Version
+	normID := strings.ToLower(s.ID)
+	if normID == "pulsex" || normID == "pilticloud" {
+		if chosenVersion != "" {
+			ui.Info("Using specified PulseX version: %s", chosenVersion)
+		} else if opts.AutoYes {
+			chosenVersion = "v8.4.41"
+			ui.Info("Using default recommended PulseX version: %s", chosenVersion)
+		} else {
+			var vErr error
+			chosenVersion, vErr = PromptPulseXVersion(reader)
+			if vErr != nil {
+				return fmt.Errorf("version selection failed: %w", vErr)
+			}
+		}
+	}
+
+	// 2. Port Configuration & Live Availability Checking
+	var configuredPorts map[string]int
+	if opts.Port > 0 {
+		configuredPorts = make(map[string]int)
+		if len(s.PortConfigs) > 0 {
+			configuredPorts[s.PortConfigs[0].Name] = opts.Port
+			ui.Info("Using specified port %d for %s", opts.Port, s.PortConfigs[0].Name)
+			if !CheckPortAvailable(opts.Port) {
+				ui.Warning("Port %d is occupied by another process on target system!", opts.Port)
+			} else {
+				ui.Success("Port %d is available on target system!", opts.Port)
+			}
+		}
+	} else {
+		var pErr error
+		configuredPorts, pErr = PromptAndCheckPorts(s, reader, opts.AutoYes)
+		if pErr != nil {
+			return fmt.Errorf("port check failed: %w", pErr)
+		}
+	}
+
+	// 3. Write configured templates
 	ui.Info("Writing configuration and compose manifests...")
-	if err := WriteTemplates(s, targetDir); err != nil {
+	if err := WriteConfiguredTemplates(s, targetDir, configuredPorts, chosenVersion); err != nil {
 		return fmt.Errorf("failed to write templates for %s: %w", s.ID, err)
 	}
 
-	// Run docker compose up -d
+	// 4. Run docker compose up -d
 	ui.Info("Pulling and launching Docker container(s) for %s...", s.ID)
 	if err := runDockerCompose(targetDir, "up", "-d"); err != nil {
 		return fmt.Errorf("failed to start container for %s: %w", s.ID, err)
@@ -62,7 +117,7 @@ func Install(s *Software, baseDir string) error {
 	time.Sleep(2 * time.Second)
 	currStatus := CheckStatus(s)
 	ui.Success("Software '%s' deployed successfully! Container Status: %s", s.Name, currStatus)
-	PrintSoftwareSummary(s, targetDir)
+	PrintSoftwareSummaryDetails(s, targetDir, configuredPorts, chosenVersion)
 	return nil
 }
 
@@ -185,6 +240,10 @@ func runDockerCompose(dir string, args ...string) error {
 }
 
 func PrintSoftwareSummary(s *Software, targetDir string) {
+	PrintSoftwareSummaryDetails(s, targetDir, nil, "")
+}
+
+func PrintSoftwareSummaryDetails(s *Software, targetDir string, configuredPorts map[string]int, version string) {
 	fmt.Println()
 	fmt.Println("==================================================================")
 	ui.Success("Software '%s' ready!", s.Name)
@@ -192,12 +251,22 @@ func PrintSoftwareSummary(s *Software, targetDir string) {
 	fmt.Printf("  %-25s : %s%s%s\n", "Software ID", ui.ColorCyan, s.ID, ui.ColorReset)
 	fmt.Printf("  %-25s : %s\n", "Container Name", s.ContainerName)
 	fmt.Printf("  %-25s : %s\n", "Config Directory", targetDir)
-	for i, p := range s.DefaultPorts {
-		label := "Default Endpoint"
-		if i > 0 {
-			label = fmt.Sprintf("Endpoint (%d)", i+1)
+	if version != "" {
+		fmt.Printf("  %-25s : %s%s%s\n", "Software Version", ui.ColorBold, version, ui.ColorReset)
+	}
+
+	if len(configuredPorts) > 0 {
+		for name, port := range configuredPorts {
+			fmt.Printf("  %-25s : %sport %d%s\n", name, ui.ColorGreen, port, ui.ColorReset)
 		}
-		fmt.Printf("  %-25s : %s%s%s\n", label, ui.ColorGreen, p, ui.ColorReset)
+	} else {
+		for i, p := range s.DefaultPorts {
+			label := "Default Endpoint"
+			if i > 0 {
+				label = fmt.Sprintf("Endpoint (%d)", i+1)
+			}
+			fmt.Printf("  %-25s : %s%s%s\n", label, ui.ColorGreen, p, ui.ColorReset)
+		}
 	}
 	fmt.Println("==================================================================")
 	fmt.Printf("Quick commands:\n")
@@ -209,10 +278,5 @@ func PrintSoftwareSummary(s *Software, targetDir string) {
 }
 
 func IsPortOccupied(port int) bool {
-	ln, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-	if err != nil {
-		return true
-	}
-	ln.Close()
-	return false
+	return !CheckPortAvailable(port)
 }

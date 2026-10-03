@@ -8,7 +8,7 @@ A standalone, zero-dependency CLI written in **Go** using the **Cobra Framework*
 4. `jenkins` : Jenkins CI/CD Automation Engine
 5. `piltiservices` : PiltiSmart Microservices Backend
 6. `kafka` : Apache Kafka Distributed Streaming Broker
-7. `pilticloud` : PiltiSmart Cloud Gateway & Sync Tunnel (PMX)
+7. `pulseX` : PulseX Cloud Gateway & Sync Tunnel (PMX - formerly `pilticloud`)
 
 ---
 
@@ -49,12 +49,12 @@ sudo chmod +x /usr/local/bin/pilti
 | Software ID | Name | Version | Default Ports | Dependencies | Description |
 |---|---|---|---|---|---|
 | **[`tb-db`](stacks/tb-db/)** | TimescaleDB / Postgres | `pg17` | `5432` | *None* (**Install 1st**) | High-performance telemetry & time-series DB |
-| **[`tb-app`](stacks/tb-app/)** | ThingsBoard Core | `3.8.1` | `80`, `8080`, `1883`, `7070` | **`tb-db`** | ThingsBoard enterprise IoT server |
+| **[`tb-app`](stacks/tb-app/)** | ThingsBoard Core | `3.8.1` | `8080`, `1883`, `7070` | **`tb-db`** | ThingsBoard enterprise IoT server |
 | **[`tb-edge`](stacks/tb-edge/)** | ThingsBoard Edge | `3.9.1EDGE` | `8082`, `1884`, `5683-5688/udp` | **`tb-app`** | Remote autonomous ThingsBoard Edge gateway |
-| **[`jenkins`](stacks/jenkins/)** | Jenkins CI/CD | `lts` | `80:8080`, `50000` | *None* | CI/CD build automation controller |
-| **[`piltiservices`](stacks/piltiservices/)** | PiltiSmart Microservices | `v7.10.7` | `80` | *None* | Specialized API microservices backend |
+| **[`jenkins`](stacks/jenkins/)** | Jenkins CI/CD | `lts` | `8085:8080`, `50000` | *None* | CI/CD build automation controller |
+| **[`piltiservices`](stacks/piltiservices/)** | PiltiSmart Microservices | `v7.10.7` | `9000:80` | *None* | Specialized API microservices backend |
 | **[`kafka`](stacks/kafka/)** | Apache Kafka Broker | `4.1.1` | `9092` | *None* | KRaft distributed event streaming broker |
-| **[`pilticloud`](stacks/pilticloud/)** | PiltiSmart Cloud Gateway | `v8.4.41` | `80` | *None* | Hybrid cloud synchronization connector (PMX) |
+| **[`pulseX`](stacks/pulsex/)** | PulseX Cloud Gateway | `v8.4.41` (dynamic selector) | `8088:80` | *None* | Hybrid cloud connector (PMX / formerly PiltiCloud) |
 
 ---
 
@@ -103,8 +103,10 @@ pilti install kafka
 # PiltiSmart Microservices Backend
 pilti install piltiservices
 
-# PiltiSmart Cloud Gateway (PMX)
-pilti install pilticloud
+# PulseX Cloud Gateway (PMX - formerly PiltiCloud)
+pilti install pulseX
+# or: pilti install pilticloud
+# or: pilti pulseX install
 ```
 
 ---
@@ -128,6 +130,7 @@ pilti status            # Global status
 pilti tb-app status     # Specific service status
 pilti jenkins status
 pilti kafka status
+pilti pulseX status
 ```
 
 ### 4. Stream Service Logs
@@ -136,13 +139,15 @@ pilti tb-app logs -f
 pilti jenkins logs -f
 pilti kafka logs -f
 pilti piltiservices logs -f
+pilti pulseX logs -f
 ```
 
 ### 5. Restart, Stop, or Remove Services
 ```bash
 pilti tb-db restart
 pilti kafka restart
-pilti pilticloud stop
+pilti pulseX restart
+pilti pulseX stop
 pilti jenkins remove
 ```
 
@@ -150,6 +155,16 @@ pilti jenkins remove
 Launch an interactive menu to choose software and actions:
 ```bash
 pilti install
+```
+
+### 7. Interactive Port Check & PulseX Version Selector
+When installing any software, `pilti` now:
+1. **Interactive Port Verification**: Displays default host port first, asks the tech user `[Y/n]` to confirm or enter a custom port, and actively tests live port availability on the target system.
+2. **PulseX Version Selector**: Dynamically connects to GitHub / Docker registry to list all available versions (e.g. `v8.4.41`, `v8.4.38`, `v8.4.4`, `latest`) and allows selecting or inputting custom tags.
+3. **Non-Interactive / Scripted Flags**: Supports `--port <number>`, `--version <tag>`, and `-y`/`--yes` for automated deployments:
+```bash
+pilti pulseX install --version v8.4.41 --port 8088 -y
+pilti tb-app install --port 8080 -y
 ```
 
 ---

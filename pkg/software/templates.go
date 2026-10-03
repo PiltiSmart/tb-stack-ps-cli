@@ -150,12 +150,12 @@ volumes:
   kafka_data:
 `
 
-const RawPiltiCloudCompose = `services:
-  piltiCloud:
-    image: piltismartsolutions/pilticloud:v8.4.41
-    container_name: piltiCloud
+const RawPulseXCompose = `services:
+  pulseX:
+    image: piltismartsolutions/pilticloud:{{VERSION}}
+    container_name: pulseX
     ports:
-      - "8088:80"
+      - "{{PORT}}:80"
     env_file:
       - ./.pmx.env
 #    working_dir: /app
@@ -164,7 +164,7 @@ const RawPiltiCloudCompose = `services:
     restart: always
 `
 
-const RawPiltiCloudEnv = `INFISICAL_CLIENT_ID=your_infisical_client_id
+const RawPulseXEnv = `INFISICAL_CLIENT_ID=your_infisical_client_id
 INFISICAL_CLIENT_SECRET=your_infisical_client_secret
 INFISICAL_PROJECT_ID=your_infisical_project_id
 INFISICAL_SITE_URL=https://eu.infisical.com
@@ -172,40 +172,80 @@ INFISICAL_ENV=test
 KAFKA_SERVER=localhost:9092
 `
 
-// WriteTemplates provisions the configuration and compose files for a given software.
+// Aliases for backwards compatibility
+const RawPiltiCloudCompose = RawPulseXCompose
+const RawPiltiCloudEnv = RawPulseXEnv
+
+// WriteTemplates provisions the configuration and compose files for a given software with default settings.
 func WriteTemplates(s *Software, targetDir string) error {
+	return WriteConfiguredTemplates(s, targetDir, nil, "")
+}
+
+// WriteConfiguredTemplates provisions the configuration and compose files with customized ports and versions.
+func WriteConfiguredTemplates(s *Software, targetDir string, ports map[string]int, customVersion string) error {
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", targetDir, err)
 	}
 
-	switch s.ID {
+	normID := strings.ToLower(s.ID)
+
+	switch normID {
 	case "tb-app":
-		if err := os.WriteFile(filepath.Join(targetDir, "docker-compose.yml"), []byte(RawTbAppCompose), 0644); err != nil {
+		compose := RawTbAppCompose
+		if p, ok := ports["Web UI"]; ok && p > 0 {
+			compose = strings.Replace(compose, "\"8080:8080\"", fmt.Sprintf("\"%d:8080\"", p), 1)
+		}
+		if p, ok := ports["MQTT Broker"]; ok && p > 0 {
+			compose = strings.Replace(compose, "\"1883:1883\"", fmt.Sprintf("\"%d:1883\"", p), 1)
+		}
+		if err := os.WriteFile(filepath.Join(targetDir, "docker-compose.yml"), []byte(compose), 0644); err != nil {
 			return err
 		}
 		if err := os.WriteFile(filepath.Join(targetDir, ".tb.env"), []byte(RawTbEnv), 0644); err != nil {
 			return err
 		}
 	case "tb-db":
-		if err := os.WriteFile(filepath.Join(targetDir, "docker-compose.yml"), []byte(RawTbDbCompose), 0644); err != nil {
+		compose := RawTbDbCompose
+		if p, ok := ports["TimescaleDB Storage"]; ok && p > 0 {
+			compose = strings.Replace(compose, "\"5432:5432\"", fmt.Sprintf("\"%d:5432\"", p), 1)
+		}
+		if err := os.WriteFile(filepath.Join(targetDir, "docker-compose.yml"), []byte(compose), 0644); err != nil {
 			return err
 		}
 		tsDir := filepath.Join(targetDir, "timescale_data")
 		_ = os.MkdirAll(tsDir, 0777)
 		_ = os.Chmod(tsDir, 0777)
 	case "tb-edge":
-		if err := os.WriteFile(filepath.Join(targetDir, "docker-compose.yml"), []byte(RawTbEdgeCompose), 0644); err != nil {
+		compose := RawTbEdgeCompose
+		if p, ok := ports["Edge Web UI"]; ok && p > 0 {
+			compose = strings.Replace(compose, "\"${EDGE_WEB_PORT:-8082}:8080\"", fmt.Sprintf("\"%d:8080\"", p), 1)
+		}
+		if p, ok := ports["Edge MQTT Broker"]; ok && p > 0 {
+			compose = strings.Replace(compose, "\"${EDGE_MQTT_PORT:-1884}:1883\"", fmt.Sprintf("\"%d:1883\"", p), 1)
+		}
+		if err := os.WriteFile(filepath.Join(targetDir, "docker-compose.yml"), []byte(compose), 0644); err != nil {
 			return err
 		}
 	case "jenkins":
-		if err := os.WriteFile(filepath.Join(targetDir, "docker-compose.yml"), []byte(RawJenkinsCompose), 0644); err != nil {
+		compose := RawJenkinsCompose
+		if p, ok := ports["Jenkins Web UI"]; ok && p > 0 {
+			compose = strings.Replace(compose, "\"8085:8080\"", fmt.Sprintf("\"%d:8080\"", p), 1)
+		}
+		if p, ok := ports["Jenkins Agent Listener"]; ok && p > 0 {
+			compose = strings.Replace(compose, "\"50000:50000\"", fmt.Sprintf("\"%d:50000\"", p), 1)
+		}
+		if err := os.WriteFile(filepath.Join(targetDir, "docker-compose.yml"), []byte(compose), 0644); err != nil {
 			return err
 		}
 		dataDir := filepath.Join(targetDir, "data")
 		_ = os.MkdirAll(dataDir, 0777)
 		_ = os.Chmod(dataDir, 0777)
 	case "piltiservices":
-		if err := os.WriteFile(filepath.Join(targetDir, "docker-compose.yml"), []byte(RawPiltiServicesCompose), 0644); err != nil {
+		compose := RawPiltiServicesCompose
+		if p, ok := ports["API Gateway"]; ok && p > 0 {
+			compose = strings.Replace(compose, "\"9000:80\"", fmt.Sprintf("\"%d:80\"", p), 1)
+		}
+		if err := os.WriteFile(filepath.Join(targetDir, "docker-compose.yml"), []byte(compose), 0644); err != nil {
 			return err
 		}
 		if err := os.WriteFile(filepath.Join(targetDir, ".piltiservices.env"), []byte(RawPiltiServicesEnv), 0644); err != nil {
@@ -215,14 +255,32 @@ func WriteTemplates(s *Software, targetDir string) error {
 		_ = os.MkdirAll(logsDir, 0777)
 		_ = os.Chmod(logsDir, 0777)
 	case "kafka":
-		if err := os.WriteFile(filepath.Join(targetDir, "docker-compose.yml"), []byte(RawKafkaCompose), 0644); err != nil {
+		compose := RawKafkaCompose
+		if p, ok := ports["Kafka PLAINTEXT Broker"]; ok && p > 0 {
+			compose = strings.Replace(compose, "\"9092:9092\"", fmt.Sprintf("\"%d:%d\"", p, p), 1)
+			compose = strings.Replace(compose, "PLAINTEXT://:9092", fmt.Sprintf("PLAINTEXT://:%d", p), 1)
+			compose = strings.Replace(compose, "PLAINTEXT://localhost:9092", fmt.Sprintf("PLAINTEXT://localhost:%d", p), 1)
+		}
+		if err := os.WriteFile(filepath.Join(targetDir, "docker-compose.yml"), []byte(compose), 0644); err != nil {
 			return err
 		}
-	case "pilticloud":
-		if err := os.WriteFile(filepath.Join(targetDir, "docker-compose.yml"), []byte(RawPiltiCloudCompose), 0644); err != nil {
+	case "pulsex", "pilticloud":
+		version := "v8.4.41"
+		if customVersion != "" {
+			version = customVersion
+		}
+		port := 8088
+		if p, ok := ports["PulseX Gateway"]; ok && p > 0 {
+			port = p
+		}
+
+		compose := strings.Replace(RawPulseXCompose, "{{VERSION}}", version, 1)
+		compose = strings.Replace(compose, "{{PORT}}", strconv.Itoa(port), 1)
+
+		if err := os.WriteFile(filepath.Join(targetDir, "docker-compose.yml"), []byte(compose), 0644); err != nil {
 			return err
 		}
-		if err := os.WriteFile(filepath.Join(targetDir, ".pmx.env"), []byte(RawPiltiCloudEnv), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(targetDir, ".pmx.env"), []byte(RawPulseXEnv), 0644); err != nil {
 			return err
 		}
 	default:

@@ -12,10 +12,13 @@ import (
 )
 
 var (
-	deployDir    string
-	repoURL      string
-	edgeWebPort  int
-	edgeMqttPort int
+	deployDir      string
+	repoURL        string
+	edgeWebPort    int
+	edgeMqttPort   int
+	installPort    int
+	installVersion string
+	installAutoYes bool
 )
 
 var installCmd = &cobra.Command{
@@ -31,7 +34,8 @@ Available software IDs:
   - jenkins       (Jenkins CI/CD Automation)
   - piltiservices (PiltiSmart Microservices)
   - kafka         (Apache Kafka Broker)
-  - pilticloud    (PiltiSmart Cloud Gateway / PMX)
+  - pulseX        (PulseX Cloud Gateway / PMX - formerly PiltiCloud)
+  - pilticloud    (Alias for pulseX)
   - all           (Install all components)
   - tb-stack      (Legacy 3-component ThingsBoard stack)
 
@@ -40,6 +44,7 @@ Examples:
   pilti install jenkins
   pilti install kafka
   pilti install piltiservices
+  pilti install pulseX
   pilti install pilticloud
   pilti install             # Interactive selection wizard`,
 	Args: cobra.MaximumNArgs(1),
@@ -87,7 +92,14 @@ Examples:
 			os.Exit(1)
 		}
 
-		err := software.Install(sw, deployDir)
+		opts := software.InstallOptions{
+			BaseDir: deployDir,
+			Version: installVersion,
+			Port:    installPort,
+			AutoYes: installAutoYes,
+		}
+
+		err := software.InstallWithOptions(sw, opts)
 		if err != nil {
 			ui.Error("Installation failed: %v", err)
 			os.Exit(1)
@@ -99,5 +111,8 @@ func init() {
 	installCmd.Flags().StringVarP(&deployDir, "dir", "d", software.DefaultBaseDir, "Base installation directory")
 	installCmd.Flags().StringVarP(&repoURL, "repo", "r", stack.DefaultCatalogRepo, "Catalog raw repository URL (for remote templates)")
 	installCmd.Flags().IntVar(&edgeWebPort, "edge-web-port", 0, "Host port for ThingsBoard Edge Web UI (default: 8082)")
-	installCmd.Flags().IntVarP(&edgeMqttPort, "edge-mqtt-port", "p", 0, "Host port for ThingsBoard Edge MQTT broker (default: 1884)")
+	installCmd.Flags().IntVar(&edgeMqttPort, "edge-mqtt-port", 0, "Host port for ThingsBoard Edge MQTT broker (default: 1884)")
+	installCmd.Flags().IntVarP(&installPort, "port", "p", 0, "Custom host port number")
+	installCmd.Flags().StringVarP(&installVersion, "version", "v", "", "Custom software version tag (e.g. for pulseX)")
+	installCmd.Flags().BoolVarP(&installAutoYes, "yes", "y", false, "Automatically accept defaults without interactive prompts")
 }

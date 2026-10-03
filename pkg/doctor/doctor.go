@@ -133,7 +133,7 @@ func RunDiagnostics() bool {
 		{50000, "jenkins (Jenkins Agent Listener)"},
 		{9000, "piltiservices (API Gateway)"},
 		{9092, "kafka (Apache Kafka PLAINTEXT Broker)"},
-		{8088, "pilticloud (Cloud Gateway / PMX)"},
+		{8088, "pulseX (PulseX Cloud Gateway / PMX)"},
 	}
 
 	fmt.Printf("\n[Dependency & Component Checks]\n")

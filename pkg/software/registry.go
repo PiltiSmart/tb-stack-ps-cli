@@ -6,15 +6,25 @@ import (
 	"strings"
 )
 
+type PortConfig struct {
+	Name        string `json:"name"`
+	DefaultPort int    `json:"default_port"`
+	Container   int    `json:"container"`
+	Protocol    string `json:"protocol"`
+}
+
 type Software struct {
-	ID            string   `json:"id"`
-	Name          string   `json:"name"`
-	Category      string   `json:"category"`
-	Description   string   `json:"description"`
-	DefaultPorts  []string `json:"ports"`
-	ContainerName string   `json:"container_name"`
-	Subdir        string   `json:"subdir"`
-	Dependencies  []string `json:"dependencies"`
+	ID            string       `json:"id"`
+	Name          string       `json:"name"`
+	Category      string       `json:"category"`
+	Description   string       `json:"description"`
+	DefaultPorts  []string     `json:"ports"`
+	PortConfigs   []PortConfig `json:"port_configs"`
+	ContainerName string       `json:"container_name"`
+	Subdir        string       `json:"subdir"`
+	Dependencies  []string     `json:"dependencies"`
+	DefaultImage  string       `json:"default_image"`
+	Aliases       []string     `json:"aliases"`
 }
 
 var Registry = []Software{
@@ -24,9 +34,14 @@ var Registry = []Software{
 		Category:      "Core IoT",
 		Description:   "ThingsBoard enterprise IoT server & device orchestrator",
 		DefaultPorts:  []string{"8080 (Web UI)", "1883 (MQTT Broker)"},
+		PortConfigs: []PortConfig{
+			{Name: "Web UI", DefaultPort: 8080, Container: 8080, Protocol: "tcp"},
+			{Name: "MQTT Broker", DefaultPort: 1883, Container: 1883, Protocol: "tcp"},
+		},
 		ContainerName: "Thingsboard-test",
 		Subdir:        "tb-app",
 		Dependencies:  []string{"tb-db"},
+		DefaultImage:  "piltismartsolutions/thingsboard-3.8.1:v-4.1.2",
 	},
 	{
 		ID:            "tb-db",
@@ -34,9 +49,13 @@ var Registry = []Software{
 		Category:      "Database",
 		Description:   "High-performance telemetry & relational time-series database",
 		DefaultPorts:  []string{"5432 (Postgres/Timescale)"},
+		PortConfigs: []PortConfig{
+			{Name: "TimescaleDB Storage", DefaultPort: 5432, Container: 5432, Protocol: "tcp"},
+		},
 		ContainerName: "tb-timescaledb",
 		Subdir:        "tb-db",
 		Dependencies:  nil,
+		DefaultImage:  "timescale/timescaledb-ha:pg17",
 	},
 	{
 		ID:            "tb-edge",
@@ -44,9 +63,14 @@ var Registry = []Software{
 		Category:      "Edge Computing",
 		Description:   "Local autonomous ThingsBoard Edge instance for remote sites",
 		DefaultPorts:  []string{"8082 (Web UI)", "1884 (MQTT Broker)"},
+		PortConfigs: []PortConfig{
+			{Name: "Edge Web UI", DefaultPort: 8082, Container: 8080, Protocol: "tcp"},
+			{Name: "Edge MQTT Broker", DefaultPort: 1884, Container: 1883, Protocol: "tcp"},
+		},
 		ContainerName: "mytbedge",
 		Subdir:        "tb-edge",
 		Dependencies:  []string{"tb-app"},
+		DefaultImage:  "thingsboard/tb-edge:3.9.1EDGE",
 	},
 	{
 		ID:            "jenkins",
@@ -54,9 +78,14 @@ var Registry = []Software{
 		Category:      "DevOps & CI/CD",
 		Description:   "Automated build, test, and release controller engine",
 		DefaultPorts:  []string{"8085 (Web UI)", "50000 (Agent Listener)"},
+		PortConfigs: []PortConfig{
+			{Name: "Jenkins Web UI", DefaultPort: 8085, Container: 8080, Protocol: "tcp"},
+			{Name: "Jenkins Agent Listener", DefaultPort: 50000, Container: 50000, Protocol: "tcp"},
+		},
 		ContainerName: "jenkins",
 		Subdir:        "jenkins",
 		Dependencies:  nil,
+		DefaultImage:  "jenkins/jenkins:lts",
 	},
 	{
 		ID:            "piltiservices",
@@ -64,9 +93,13 @@ var Registry = []Software{
 		Category:      "Backend Services",
 		Description:   "Modular PiltiSmart specialized API backend services",
 		DefaultPorts:  []string{"9000 (Web/API Gateway)"},
+		PortConfigs: []PortConfig{
+			{Name: "API Gateway", DefaultPort: 9000, Container: 80, Protocol: "tcp"},
+		},
 		ContainerName: "piltiservices-test",
 		Subdir:        "piltiservices",
 		Dependencies:  nil,
+		DefaultImage:  "piltismartsolutions/piltiservices:v7.10.7",
 	},
 	{
 		ID:            "kafka",
@@ -74,19 +107,28 @@ var Registry = []Software{
 		Category:      "Message Streaming",
 		Description:   "KRaft-based distributed event streaming & message broker",
 		DefaultPorts:  []string{"9092 (PLAINTEXT Broker)"},
+		PortConfigs: []PortConfig{
+			{Name: "Kafka PLAINTEXT Broker", DefaultPort: 9092, Container: 9092, Protocol: "tcp"},
+		},
 		ContainerName: "kafka",
 		Subdir:        "kafka",
 		Dependencies:  nil,
+		DefaultImage:  "apache/kafka:4.1.1",
 	},
 	{
-		ID:            "pilticloud",
-		Name:          "PiltiSmart Cloud Gateway",
+		ID:            "pulseX",
+		Name:          "PulseX Cloud Gateway",
 		Category:      "Cloud Platform",
-		Description:   "Hybrid cloud synchronization connector and remote tunnel",
-		DefaultPorts:  []string{"8088 (Cloud Gateway / PMX)"},
-		ContainerName: "piltiCloud",
-		Subdir:        "pilticloud",
+		Description:   "Hybrid cloud synchronization connector and remote tunnel (PulseX / PMX)",
+		DefaultPorts:  []string{"8088 (PulseX Cloud Gateway)"},
+		PortConfigs: []PortConfig{
+			{Name: "PulseX Gateway", DefaultPort: 8088, Container: 80, Protocol: "tcp"},
+		},
+		ContainerName: "pulseX",
+		Subdir:        "pulsex",
 		Dependencies:  nil,
+		DefaultImage:  "piltismartsolutions/pilticloud:v8.4.41",
+		Aliases:       []string{"pulsex", "pilticloud", "pmx", "cloud", "pilti-cloud"},
 	},
 }
 
@@ -102,8 +144,8 @@ func GetSoftware(id string) (*Software, bool) {
 		norm = "tb-db"
 	} else if norm == "piltiservice" || norm == "services" {
 		norm = "piltiservices"
-	} else if norm == "pmx" || norm == "cloud" || norm == "pilti-cloud" {
-		norm = "pilticloud"
+	} else if norm == "pulsex" || norm == "pilticloud" || norm == "pmx" || norm == "cloud" || norm == "pilti-cloud" {
+		norm = "pulsex"
 	} else if norm == "kafka-broker" || norm == "broker" || norm == "apache-kafka" {
 		norm = "kafka"
 	} else if norm == "ci" || norm == "pilti-jenkins" {
@@ -113,6 +155,11 @@ func GetSoftware(id string) (*Software, bool) {
 	for _, s := range Registry {
 		if strings.ToLower(s.ID) == norm {
 			return &s, true
+		}
+		for _, a := range s.Aliases {
+			if strings.ToLower(a) == norm {
+				return &s, true
+			}
 		}
 	}
 	return nil, false
@@ -124,7 +171,17 @@ func CheckStatus(s *Software) string {
 	cmd := exec.Command("docker", "inspect", "--format", "{{.State.Status}}", s.ContainerName)
 	out, err := cmd.Output()
 	if err != nil {
-		return "NOT INSTALLED"
+		// For pulseX, also check legacy container name piltiCloud
+		if s.ID == "pulseX" {
+			cmdOld := exec.Command("docker", "inspect", "--format", "{{.State.Status}}", "piltiCloud")
+			if outOld, errOld := cmdOld.Output(); errOld == nil {
+				out = outOld
+			} else {
+				return "NOT INSTALLED"
+			}
+		} else {
+			return "NOT INSTALLED"
+		}
 	}
 	status := strings.TrimSpace(string(out))
 	switch status {
