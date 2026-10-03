@@ -63,6 +63,7 @@ func InstallWithOptions(s *Software, opts InstallOptions) error {
 	}
 
 	reader := bufio.NewReader(os.Stdin)
+	normID := strings.ToLower(s.ID)
 
 	// 1. Version Selection for all software
 	chosenVersion := opts.Version
