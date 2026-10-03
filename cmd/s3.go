@@ -56,9 +56,21 @@ func printS3Help() {
 	fmt.Println("==================================================================")
 }
 
-// executeMC prepares mc and executes the command with given arguments
+var (
+	s3LsHost     string
+	s3LsPort     int
+	s3LsUser     string
+	s3LsPassword string
+	s3LsAutoYes  bool
+)
+
+// executeMC prepares mc and executes the command with default configuration
 func executeMC(mcCmd string, args ...string) error {
-	cfg := s3.GetDefaultConfig()
+	return executeMCWithConfig(s3.GetDefaultConfig(), mcCmd, args...)
+}
+
+// executeMCWithConfig prepares mc with the specified configuration and executes the command
+func executeMCWithConfig(cfg *s3.Config, mcCmd string, args ...string) error {
 	mcPath, err := s3.EnsureMC(cfg)
 	if err != nil {
 		ui.Error("%v", err)
@@ -72,9 +84,18 @@ func executeMC(mcCmd string, args ...string) error {
 // pilti s3 ls [target]
 var s3LsCmd = &cobra.Command{
 	Use:   "ls [target]",
-	Short: "List S3 buckets or objects inside a bucket",
+	Short: "List S3 buckets or objects inside a bucket (prompts for server IP, port & credentials)",
+	Long: `List S3 buckets or objects inside a bucket.
+Prompts for MinIO / S3 Server IP, Port (displays default port 9000 first), Username, and Password.
+Can also be passed non-interactively via flags (--host, --port, --user, --password, -y).
+
+Examples:
+  pilti s3 ls
+  pilti s3 ls s3://mybucket
+  pilti s3 ls --host 192.168.1.100 --port 9000 -u minioadmin -p minioadmin123
+  pilti s3 ls -y`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cfg := s3.GetDefaultConfig()
+		cfg := s3.ResolveServerConfig(s3LsHost, s3LsPort, s3LsUser, s3LsPassword, s3LsAutoYes)
 		target := cfg.Alias
 		if len(args) > 0 && args[0] != "" {
 			target = s3.NormalizePath(args[0], cfg.Alias)
@@ -87,7 +108,7 @@ var s3LsCmd = &cobra.Command{
 			}
 		}
 
-		if err := executeMC("ls", mcArgs...); err != nil {
+		if err := executeMCWithConfig(cfg, "ls", mcArgs...); err != nil {
 			os.Exit(1)
 		}
 	},
@@ -298,6 +319,12 @@ func init() {
 	s3RmCmd.Flags().BoolVarP(&s3RmRecursive, "recursive", "r", false, "Remove recursively")
 	s3RmCmd.Flags().BoolVarP(&s3RmForce, "force", "f", false, "Force removal without prompt")
 	s3SyncCmd.Flags().BoolVar(&s3SyncDelete, "delete", false, "Delete files in destination that do not exist in source")
+
+	s3LsCmd.Flags().StringVarP(&s3LsHost, "host", "H", "", "MinIO / S3 Server IP or Hostname")
+	s3LsCmd.Flags().IntVarP(&s3LsPort, "port", "P", 0, "MinIO / S3 Server Port (default 9000)")
+	s3LsCmd.Flags().StringVarP(&s3LsUser, "user", "u", "", "MinIO Access Key / Username (default minioadmin)")
+	s3LsCmd.Flags().StringVarP(&s3LsPassword, "password", "p", "", "MinIO Secret Key / Password (default minioadmin123)")
+	s3LsCmd.Flags().BoolVarP(&s3LsAutoYes, "yes", "y", false, "Use defaults without interactive prompt")
 
 	s3Cmd.AddCommand(s3LsCmd)
 	s3Cmd.AddCommand(s3MbCmd)

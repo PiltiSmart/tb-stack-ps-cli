@@ -219,7 +219,7 @@ pilti s3 --help
 
 | Operation | Command | Description |
 |---|---|---|
-| **List Buckets** | `pilti s3 ls` | Lists all buckets on MinIO |
+| **List Buckets** | `pilti s3 ls` | Lists all buckets on MinIO (prompts for server IP, port & credentials) |
 | **List Objects** | `pilti s3 ls s3://mybucket` | Lists objects inside `mybucket` |
 | **Make Bucket** | `pilti s3 mb s3://mybucket` | Creates a new S3 bucket |
 | **Remove Bucket** | `pilti s3 rb s3://mybucket [--force]` | Deletes an S3 bucket |
@@ -232,4 +232,20 @@ pilti s3 --help
 | **Delete Object** | `pilti s3 rm s3://mybucket/data.csv` | Removes an object from S3 |
 | **Setup & Verify** | `pilti s3 setup` | Verifies `mc` binary and registers alias |
 | **Configuration** | `pilti s3 config` | Displays active endpoint & credentials |
+
+### 3. Interactive Server Connection (`pilti s3 ls`)
+When executing `pilti s3 ls`, `pilti` prompts the technical user:
+1. **Server IP or Hostname** (default: `localhost`)
+2. **Port verification** (displays `Default Port: 9000` first, then asks `[Y/n]` or accepts custom port)
+3. **Username / Access Key** (default: `minioadmin`)
+4. **Password / Secret Key** (default: `minioadmin123`)
+
+For non-interactive or scripted execution, pass connection flags:
+```bash
+# Connect to remote MinIO server
+pilti s3 ls --host 192.168.1.100 --port 9000 -u minioadmin -p minioadmin123
+
+# Fast-connect using local defaults without prompts
+pilti s3 ls -y
+```
 

@@ -245,26 +245,19 @@ func isDirWritable(path string) bool {
 	return true
 }
 
-// EnsureAlias checks if the alias exists; if not, registers it with mc alias set.
-func EnsureAlias(mcPath string, cfg *Config) error {
-	// Test if alias is already configured
-	cmd := exec.Command(mcPath, "alias", "list", cfg.Alias)
-	if err := cmd.Run(); err == nil {
-		// Already exists
-		return nil
-	}
-
-	// Configure alias
-	ui.Info("Configuring MinIO alias '%s' -> %s...", cfg.Alias, cfg.Endpoint)
+// SetAlias registers or updates the MinIO alias with mc alias set.
+func SetAlias(mcPath string, cfg *Config) error {
 	setCmd := exec.Command(mcPath, "alias", "set", cfg.Alias, cfg.Endpoint, cfg.AccessKey, cfg.SecretKey)
-	setCmd.Stdout = os.Stdout
-	setCmd.Stderr = os.Stderr
-	if err := setCmd.Run(); err != nil {
-		return fmt.Errorf("failed to set mc alias '%s': %w", cfg.Alias, err)
+	out, err := setCmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("failed to set MinIO alias '%s' for %s: %s (%w)", cfg.Alias, cfg.Endpoint, strings.TrimSpace(string(out)), err)
 	}
-
-	ui.Success("MinIO alias '%s' configured successfully!", cfg.Alias)
 	return nil
+}
+
+// EnsureAlias registers or updates the MinIO alias.
+func EnsureAlias(mcPath string, cfg *Config) error {
+	return SetAlias(mcPath, cfg)
 }
 
 // NormalizePath converts s3://bucket/path or bare bucket/path into alias/bucket/path.
