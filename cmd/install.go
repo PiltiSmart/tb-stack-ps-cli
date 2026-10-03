@@ -19,6 +19,8 @@ var (
 	installPort    int
 	installVersion string
 	installAutoYes bool
+	installDBUser  string
+	installDBPass  string
 )
 
 var installCmd = &cobra.Command{
@@ -94,10 +96,12 @@ Examples:
 		}
 
 		opts := software.InstallOptions{
-			BaseDir: deployDir,
-			Version: installVersion,
-			Port:    installPort,
-			AutoYes: installAutoYes,
+			BaseDir:    deployDir,
+			Version:    installVersion,
+			Port:       installPort,
+			AutoYes:    installAutoYes,
+			DBUser:     installDBUser,
+			DBPassword: installDBPass,
 		}
 
 		err := software.InstallWithOptions(sw, opts)
@@ -116,4 +120,6 @@ func init() {
 	installCmd.Flags().IntVarP(&installPort, "port", "p", 0, "Custom host port number")
 	installCmd.Flags().StringVarP(&installVersion, "version", "v", "", "Custom software version tag (e.g. for pulseX)")
 	installCmd.Flags().BoolVarP(&installAutoYes, "yes", "y", false, "Automatically accept defaults without interactive prompts")
+	installCmd.Flags().StringVar(&installDBUser, "db-user", "", "PostgreSQL database username (for tb-db)")
+	installCmd.Flags().StringVar(&installDBPass, "db-password", "", "PostgreSQL database password (for tb-db)")
 }

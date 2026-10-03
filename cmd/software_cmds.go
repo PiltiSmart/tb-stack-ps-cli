@@ -14,6 +14,8 @@ var (
 	softwarePort    int
 	softwareVersion string
 	softwareAutoYes bool
+	softwareDBUser  string
+	softwareDBPass  string
 	logFollow       bool
 )
 
@@ -43,10 +45,12 @@ Description: %s`, s.Name, s.Category, s.DefaultPorts, s.Description),
 		Short: fmt.Sprintf("Install and run %s", s.Name),
 		Run: func(cmd *cobra.Command, args []string) {
 			opts := software.InstallOptions{
-				BaseDir: softwareBaseDir,
-				Version: softwareVersion,
-				Port:    softwarePort,
-				AutoYes: softwareAutoYes,
+				BaseDir:    softwareBaseDir,
+				Version:    softwareVersion,
+				Port:       softwarePort,
+				AutoYes:    softwareAutoYes,
+				DBUser:     softwareDBUser,
+				DBPassword: softwareDBPass,
 			}
 			if err := software.InstallWithOptions(&s, opts); err != nil {
 				ui.Error("Failed to install %s: %v", s.ID, err)
@@ -58,6 +62,8 @@ Description: %s`, s.Name, s.Category, s.DefaultPorts, s.Description),
 	installCmd.Flags().IntVarP(&softwarePort, "port", "p", 0, "Custom host port number")
 	installCmd.Flags().StringVarP(&softwareVersion, "version", "v", "", "Custom software version tag")
 	installCmd.Flags().BoolVarP(&softwareAutoYes, "yes", "y", false, "Automatically accept defaults without interactive prompts")
+	installCmd.Flags().StringVar(&softwareDBUser, "db-user", "", "PostgreSQL database username (for tb-db)")
+	installCmd.Flags().StringVar(&softwareDBPass, "db-password", "", "PostgreSQL database password (for tb-db)")
 
 	statusCmd := &cobra.Command{
 		Use:   "status",

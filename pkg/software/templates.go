@@ -13,8 +13,8 @@ services:
     container_name: tb-timescaledb
     restart: always
     environment:
-      POSTGRES_PASSWORD: your_postgres_password
-      POSTGRES_USER: your_postgres_user
+      POSTGRES_PASSWORD: {{POSTGRES_PASSWORD}}
+      POSTGRES_USER: {{POSTGRES_USER}}
       POSTGRES_DB: thingsboard
       PGDATA: /var/lib/postgresql/data/pgdata
     command: postgres -c shared_preload_libraries=pg_stat_statements,timescaledb
@@ -201,6 +201,11 @@ func WriteTemplates(s *Software, targetDir string) error {
 
 // WriteConfiguredTemplates provisions the configuration and compose files with customized ports and versions.
 func WriteConfiguredTemplates(s *Software, targetDir string, ports map[string]int, customVersion string) error {
+	return WriteConfiguredTemplatesWithCreds(s, targetDir, ports, customVersion, "", "")
+}
+
+// WriteConfiguredTemplatesWithCreds provisions configuration and compose files with customized ports, versions, and database credentials.
+func WriteConfiguredTemplatesWithCreds(s *Software, targetDir string, ports map[string]int, customVersion string, dbUser, dbPass string) error {
 	if err := os.MkdirAll(targetDir, 0755); err != nil {
 		return fmt.Errorf("failed to create directory %s: %w", targetDir, err)
 	}
@@ -223,10 +228,24 @@ func WriteConfiguredTemplates(s *Software, targetDir string, ports map[string]in
 			return err
 		}
 	case "tb-db":
+		user := "postgres"
+		if dbUser != "" {
+			user = dbUser
+		}
+		pass := "postgres"
+		if dbPass != "" {
+			pass = dbPass
+		}
+
 		compose := RawTbDbCompose
 		if p, ok := ports["TimescaleDB Storage"]; ok && p > 0 {
 			compose = strings.Replace(compose, "\"5432:5432\"", fmt.Sprintf("\"%d:5432\"", p), 1)
 		}
+		compose = strings.Replace(compose, "{{POSTGRES_USER}}", user, 1)
+		compose = strings.Replace(compose, "{{POSTGRES_PASSWORD}}", pass, 1)
+		compose = strings.Replace(compose, "your_postgres_user", user, 1)
+		compose = strings.Replace(compose, "your_postgres_password", pass, 1)
+
 		if err := os.WriteFile(filepath.Join(targetDir, "docker-compose.yml"), []byte(compose), 0644); err != nil {
 			return err
 		}

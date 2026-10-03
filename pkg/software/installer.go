@@ -16,10 +16,12 @@ import (
 const DefaultBaseDir = "/opt/piltismart"
 
 type InstallOptions struct {
-	BaseDir string
-	Version string
-	Port    int
-	AutoYes bool
+	BaseDir    string
+	Version    string
+	Port       int
+	AutoYes    bool
+	DBUser     string
+	DBPassword string
 }
 
 // Install provisions configuration and starts containers for a given software using interactive prompts.
@@ -102,9 +104,30 @@ func InstallWithOptions(s *Software, opts InstallOptions) error {
 		}
 	}
 
+	// 2.5 PostgreSQL Database Credentials (for tb-db)
+	var dbUser, dbPass string
+	if normID == "tb-db" || normID == "db" {
+		dbUser = opts.DBUser
+		dbPass = opts.DBPassword
+		if opts.AutoYes {
+			if dbUser == "" {
+				dbUser = "postgres"
+			}
+			if dbPass == "" {
+				dbPass = "postgres"
+			}
+		} else if dbUser == "" || dbPass == "" {
+			var err error
+			dbUser, dbPass, err = PromptPostgresCredentials(reader, dbUser, dbPass)
+			if err != nil {
+				return fmt.Errorf("database credentials prompt failed: %w", err)
+			}
+		}
+	}
+
 	// 3. Write configured templates
 	ui.Info("Writing configuration and compose manifests...")
-	if err := WriteConfiguredTemplates(s, targetDir, configuredPorts, chosenVersion); err != nil {
+	if err := WriteConfiguredTemplatesWithCreds(s, targetDir, configuredPorts, chosenVersion, dbUser, dbPass); err != nil {
 		return fmt.Errorf("failed to write templates for %s: %w", s.ID, err)
 	}
 
@@ -280,6 +303,24 @@ func PrintSoftwareSummaryDetails(s *Software, targetDir string, configuredPorts 
 		}
 	}
 
+	if s.ID == "tb-db" {
+		dbUser := "postgres"
+		composePath := filepath.Join(targetDir, "docker-compose.yml")
+		if data, err := os.ReadFile(composePath); err == nil {
+			for _, line := range strings.Split(string(data), "\n") {
+				trimmed := strings.TrimSpace(line)
+				if strings.HasPrefix(trimmed, "POSTGRES_USER:") {
+					parts := strings.SplitN(trimmed, ":", 2)
+					if len(parts) == 2 && strings.TrimSpace(parts[1]) != "" {
+						dbUser = strings.TrimSpace(parts[1])
+					}
+				}
+			}
+		}
+		fmt.Printf("  %-25s : %s%s%s\n", "Database User", ui.ColorBold, dbUser, ui.ColorReset)
+		fmt.Printf("  %-25s : %s\n", "Database Name", "thingsboard")
+	}
+
 	envFiles := DetectEnvFiles(targetDir, s)
 	if len(envFiles) > 0 {
 		fmt.Println("------------------------------------------------------------------")
@@ -404,4 +445,48 @@ func DisplayEnvNoticeInstallationDone(envFiles []string, targetDir string, softw
 
 func IsPortOccupied(port int) bool {
 	return !CheckPortAvailable(port)
+}
+
+// PromptPostgresCredentials interactively asks for PostgreSQL username and password.
+func PromptPostgresCredentials(reader *bufio.Reader, defaultUser, defaultPass string) (string, string, error) {
+	if reader == nil {
+		reader = bufio.NewReader(os.Stdin)
+	}
+	if defaultUser == "" {
+		defaultUser = "postgres"
+	}
+	if defaultPass == "" {
+		defaultPass = "postgres"
+	}
+
+	fmt.Println()
+	fmt.Println("==================================================================")
+	fmt.Printf("%s%s[PostgreSQL / TimescaleDB Database Credentials]%s\n", ui.ColorBold, ui.ColorCyan, ui.ColorReset)
+	fmt.Println("==================================================================")
+
+	fmt.Printf("  Enter PostgreSQL Username [default: %s]: ", defaultUser)
+	inputUser, err := reader.ReadString('\n')
+	if err != nil {
+		return defaultUser, defaultPass, err
+	}
+	inputUser = strings.TrimSpace(inputUser)
+	if inputUser == "" {
+		inputUser = defaultUser
+	}
+
+	fmt.Printf("  Enter PostgreSQL Password [default: %s]: ", defaultPass)
+	inputPass, err := reader.ReadString('\n')
+	if err != nil {
+		return inputUser, defaultPass, err
+	}
+	inputPass = strings.TrimSpace(inputPass)
+	if inputPass == "" {
+		inputPass = defaultPass
+	}
+
+	fmt.Println("==================================================================")
+	ui.Success("Database user configured: %s%s%s", ui.ColorBold, inputUser, ui.ColorReset)
+	fmt.Println()
+
+	return inputUser, inputPass, nil
 }

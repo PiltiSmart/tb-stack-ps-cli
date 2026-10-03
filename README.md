@@ -65,9 +65,13 @@ sudo chmod +x /usr/local/bin/pilti
 ThingsBoard software components **must** be deployed in prerequisite order. If a prerequisite dependency is missing, `pilti` will halt and display a clear dependency error:
 
 ### Step 1: Deploy TimescaleDB Database (`tb-db`) — Install 1st
+During installation, `pilti` prompts for custom PostgreSQL username and password (defaulting to `postgres`), and automatically configures `docker-compose.yml`:
 ```bash
 pilti install tb-db
 # or: pilti tb-db install
+
+# Non-interactive / scripted with custom credentials:
+pilti tb-db install --db-user myuser --db-password mysecurepassword -y
 ```
 
 ### Step 2: Deploy ThingsBoard Core Application (`tb-app`) — Install 2nd
