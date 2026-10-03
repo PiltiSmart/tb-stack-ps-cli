@@ -274,7 +274,7 @@ Can be run interactively or with flags (--host, --port, -u, -p, -y).
 
 Examples:
   pilti s3 setup
-  pilti s3 setup --host 145.241.237.108 --port 9000 -u minioadmin -p minioadmin123
+  pilti s3 setup --host 192.168.1.100 --port 9000 -u minioadmin -p minioadmin123
   pilti s3 setup -y`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ui.PrintBanner("PiltiSmart S3 / MinIO Environment Setup")

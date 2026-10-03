@@ -251,10 +251,10 @@ pilti s3 --help
 - **Updating Connection via Flags**: Whenever you need to change your server IP, port, or credentials, pass CLI flags. The CLI immediately updates your saved connection and executes:
   ```bash
   # Update connection via flags (saves automatically, zero prompts)
-  pilti s3 ls --host 145.241.237.108 --port 9000 -u minioadmin -p minioadmin123
+  pilti s3 ls --host 192.168.1.100 --port 9000 -u minioadmin -p minioadmin123
 
   # Or configure using the setup subcommand
-  pilti s3 setup --host 145.241.237.108 --port 9000 -u minioadmin -p minioadmin123
+  pilti s3 setup --host 192.168.1.100 --port 9000 -u minioadmin -p minioadmin123
   ```
 - **Interactive Reconfiguration**: To re-launch the interactive connection prompt at any time:
   ```bash
