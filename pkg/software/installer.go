@@ -64,21 +64,21 @@ func InstallWithOptions(s *Software, opts InstallOptions) error {
 
 	reader := bufio.NewReader(os.Stdin)
 
-	// 1. Version Selection (for PulseX / PiltiCloud)
+	// 1. Version Selection for all software
 	chosenVersion := opts.Version
-	normID := strings.ToLower(s.ID)
-	if normID == "pulsex" || normID == "pilticloud" {
-		if chosenVersion != "" {
-			ui.Info("Using specified PulseX version: %s", chosenVersion)
-		} else if opts.AutoYes {
-			chosenVersion = "v8.4.41"
-			ui.Info("Using default recommended PulseX version: %s", chosenVersion)
-		} else {
-			var vErr error
-			chosenVersion, vErr = PromptPulseXVersion(reader)
-			if vErr != nil {
-				return fmt.Errorf("version selection failed: %w", vErr)
-			}
+	if chosenVersion != "" {
+		ui.Info("Using specified %s version: %s", s.Name, chosenVersion)
+	} else if opts.AutoYes {
+		chosenVersion = s.Version
+		if chosenVersion == "" {
+			chosenVersion = "latest"
+		}
+		ui.Info("Using default recommended %s version: %s", s.Name, chosenVersion)
+	} else {
+		var vErr error
+		chosenVersion, vErr = PromptSoftwareVersion(s, reader, opts.AutoYes)
+		if vErr != nil {
+			return fmt.Errorf("version selection failed: %w", vErr)
 		}
 	}
 

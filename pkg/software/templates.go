@@ -217,6 +217,9 @@ func WriteConfiguredTemplatesWithCreds(s *Software, targetDir string, ports map[
 	switch normID {
 	case "tb-app":
 		compose := RawTbAppCompose
+		if customVersion != "" {
+			compose = strings.Replace(compose, ":v-4.1.2", fmt.Sprintf(":%s", customVersion), 1)
+		}
 		if p, ok := ports["Web UI"]; ok && p > 0 {
 			compose = strings.Replace(compose, "\"8080:8080\"", fmt.Sprintf("\"%d:8080\"", p), 1)
 		}
@@ -240,6 +243,9 @@ func WriteConfiguredTemplatesWithCreds(s *Software, targetDir string, ports map[
 		}
 
 		compose := RawTbDbCompose
+		if customVersion != "" {
+			compose = strings.Replace(compose, ":pg17", fmt.Sprintf(":%s", customVersion), 1)
+		}
 		if p, ok := ports["TimescaleDB Storage"]; ok && p > 0 {
 			compose = strings.Replace(compose, "\"5432:5432\"", fmt.Sprintf("\"%d:5432\"", p), 1)
 		}
@@ -256,6 +262,9 @@ func WriteConfiguredTemplatesWithCreds(s *Software, targetDir string, ports map[
 		_ = os.Chmod(tsDir, 0777)
 	case "tb-edge":
 		compose := RawTbEdgeCompose
+		if customVersion != "" {
+			compose = strings.Replace(compose, ":3.9.1EDGE", fmt.Sprintf(":%s", customVersion), 1)
+		}
 		if p, ok := ports["Edge Web UI"]; ok && p > 0 {
 			compose = strings.Replace(compose, "\"${EDGE_WEB_PORT:-8082}:8080\"", fmt.Sprintf("\"%d:8080\"", p), 1)
 		}
@@ -267,6 +276,9 @@ func WriteConfiguredTemplatesWithCreds(s *Software, targetDir string, ports map[
 		}
 	case "jenkins":
 		compose := RawJenkinsCompose
+		if customVersion != "" {
+			compose = strings.Replace(compose, ":lts", fmt.Sprintf(":%s", customVersion), 1)
+		}
 		if p, ok := ports["Jenkins Web UI"]; ok && p > 0 {
 			compose = strings.Replace(compose, "\"8085:8080\"", fmt.Sprintf("\"%d:8080\"", p), 1)
 		}
@@ -281,6 +293,9 @@ func WriteConfiguredTemplatesWithCreds(s *Software, targetDir string, ports map[
 		_ = os.Chmod(dataDir, 0777)
 	case "piltiservices":
 		compose := RawPiltiServicesCompose
+		if customVersion != "" {
+			compose = strings.Replace(compose, ":v7.10.7", fmt.Sprintf(":%s", customVersion), 1)
+		}
 		if p, ok := ports["API Gateway"]; ok && p > 0 {
 			compose = strings.Replace(compose, "\"9000:80\"", fmt.Sprintf("\"%d:80\"", p), 1)
 		}
@@ -295,6 +310,9 @@ func WriteConfiguredTemplatesWithCreds(s *Software, targetDir string, ports map[
 		_ = os.Chmod(logsDir, 0777)
 	case "kafka":
 		compose := RawKafkaCompose
+		if customVersion != "" {
+			compose = strings.Replace(compose, ":4.1.1", fmt.Sprintf(":%s", customVersion), 1)
+		}
 		if p, ok := ports["Kafka PLAINTEXT Broker"]; ok && p > 0 {
 			compose = strings.Replace(compose, "\"9092:9092\"", fmt.Sprintf("\"%d:%d\"", p, p), 1)
 			compose = strings.Replace(compose, "PLAINTEXT://:9092", fmt.Sprintf("PLAINTEXT://:%d", p), 1)

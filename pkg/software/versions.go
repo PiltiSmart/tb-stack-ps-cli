@@ -168,3 +168,95 @@ func PromptPulseXVersion(reader *bufio.Reader) (string, error) {
 	ui.Success("Selected version: %s", input)
 	return input, nil
 }
+
+// GetAvailableSoftwareVersions returns known or available versions/tags for any given software.
+func GetAvailableSoftwareVersions(s *Software) []string {
+	norm := strings.ToLower(s.ID)
+	switch norm {
+	case "pulsex", "pilticloud":
+		return FetchPulseXVersions()
+	case "jenkins":
+		return []string{"lts", "latest", "lts-jdk17", "lts-jdk21", "2.479.1"}
+	case "tb-app":
+		return []string{"v-4.1.2", "v-4.1.1", "3.8.1", "latest"}
+	case "tb-db":
+		return []string{"pg17", "pg16", "latest"}
+	case "tb-edge":
+		return []string{"3.9.1EDGE", "3.8.0EDGE", "latest"}
+	case "piltiservices":
+		return []string{"v7.10.7", "v7.10.6", "latest"}
+	case "kafka":
+		return []string{"4.1.1", "3.9.0", "3.8.0", "latest"}
+	case "minio", "minio-server", "s3-server":
+		return []string{"latest", "RELEASE.2025-07-16T15-35-03Z", "RELEASE.2024-11-07T00-52-28Z"}
+	default:
+		if s.Version != "" {
+			return []string{s.Version, "latest"}
+		}
+		return []string{"latest"}
+	}
+}
+
+// PromptSoftwareVersion interactively prompts for the version for ANY software component.
+func PromptSoftwareVersion(s *Software, reader *bufio.Reader, autoYes bool) (string, error) {
+	defaultVersion := s.Version
+	if defaultVersion == "" {
+		defaultVersion = "latest"
+	}
+
+	if autoYes {
+		return defaultVersion, nil
+	}
+
+	if reader == nil {
+		reader = bufio.NewReader(os.Stdin)
+	}
+
+	norm := strings.ToLower(s.ID)
+	// If PulseX, use the multi-choice catalog with dynamic GitHub versions
+	if norm == "pulsex" || norm == "pilticloud" {
+		return PromptPulseXVersion(reader)
+	}
+
+	available := GetAvailableSoftwareVersions(s)
+
+	fmt.Println()
+	fmt.Println("==================================================================")
+	ui.PrintBanner(fmt.Sprintf("Version Selection: %s", s.Name))
+	fmt.Printf("  • Default / Recommended Version: %s%s%s\n", ui.ColorGreen, defaultVersion, ui.ColorReset)
+	if len(available) > 1 {
+		fmt.Printf("  • Known Versions: %s\n", strings.Join(available, ", "))
+	}
+	fmt.Printf("  • Do you want to use the default version (%s)? [Y/n] (or enter custom version/tag): ", defaultVersion)
+
+	input, err := reader.ReadString('\n')
+	if err != nil {
+		return defaultVersion, nil
+	}
+	input = strings.TrimSpace(input)
+
+	if input == "" || strings.ToLower(input) == "y" || strings.ToLower(input) == "yes" {
+		ui.Success("Selected default version: %s", defaultVersion)
+		return defaultVersion, nil
+	}
+
+	if strings.ToLower(input) == "n" || strings.ToLower(input) == "no" {
+		for {
+			fmt.Printf("  Enter custom version/tag for %s: ", s.Name)
+			custom, err := reader.ReadString('\n')
+			if err != nil {
+				return defaultVersion, nil
+			}
+			custom = strings.TrimSpace(custom)
+			if custom != "" {
+				ui.Success("Selected custom version: %s", custom)
+				return custom, nil
+			}
+			fmt.Printf("  %sVersion cannot be empty. Please enter a valid tag or version.%s\n", ui.ColorRed, ui.ColorReset)
+		}
+	}
+
+	// User directly typed custom version tag
+	ui.Success("Selected version: %s", input)
+	return input, nil
+}
