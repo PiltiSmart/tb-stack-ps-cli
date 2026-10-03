@@ -25,9 +25,9 @@ var listCmd = &cobra.Command{
 		ui.PrintBanner("PiltiSmart Software Catalog")
 
 		fmt.Println("Available PiltiSmart software components:")
-		fmt.Println(strings.Repeat("-", 95))
-		fmt.Printf("%-14s %-28s %-16s %-18s %s\n", "SOFTWARE ID", "SOFTWARE NAME", "CATEGORY", "PORTS", "STATUS")
-		fmt.Println(strings.Repeat("-", 95))
+		fmt.Println(strings.Repeat("-", 108))
+		fmt.Printf("%-14s %-28s %-16s %-13s %-18s %s\n", "SOFTWARE ID", "SOFTWARE NAME", "CATEGORY", "VERSION", "PORTS", "STATUS")
+		fmt.Println(strings.Repeat("-", 108))
 
 		for _, s := range software.Registry {
 			status := software.CheckStatus(&s)
@@ -46,15 +46,18 @@ var listCmd = &cobra.Command{
 				}
 			}
 
-			fmt.Printf("%-14s %-28s %-16s %-18s %s\n",
+			version := software.GetVersion(&s)
+
+			fmt.Printf("%-14s %-28s %-16s %-13s %-18s %s\n",
 				s.ID,
 				s.Name,
 				s.Category,
+				version,
 				portsStr,
 				statusFormatted,
 			)
 		}
-		fmt.Println(strings.Repeat("-", 95))
+		fmt.Println(strings.Repeat("-", 108))
 
 		fmt.Println("\nTo manage any software, use subcommands or run interactively:")
 		fmt.Printf("  • %spilti <software-id> install%s  (e.g., %spilti tb-app install%s)\n", ui.ColorBold, ui.ColorReset, ui.ColorCyan, ui.ColorReset)

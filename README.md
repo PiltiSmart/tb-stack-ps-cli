@@ -117,6 +117,19 @@ pilti install pulseX
 ```bash
 pilti list
 ```
+Displays all software packages, active or configured versions, ports, and live container statuses:
+```text
+SOFTWARE ID    SOFTWARE NAME                CATEGORY         VERSION       PORTS              STATUS
+------------------------------------------------------------------------------------------------------------
+tb-app         ThingsBoard Core Application Core IoT         v-4.1.2       8080, 1883         RUNNING
+tb-db          TimescaleDB / PostgreSQL     Database         pg17          5432               RUNNING
+tb-edge        ThingsBoard Edge Gateway     Edge Computing   3.9.1EDGE     8082, 1884         NOT INSTALLED
+jenkins        Jenkins CI/CD Automation     DevOps & CI/CD   lts           8085, 50000        NOT INSTALLED
+piltiservices  PiltiSmart Microservices     Backend Services v7.10.7       9000               NOT INSTALLED
+kafka          Apache Kafka Broker          Message Stream.. 4.1.1         9092               NOT INSTALLED
+pulseX         PulseX Cloud Gateway         Cloud Platform   v8.4.41       8088               RUNNING
+------------------------------------------------------------------------------------------------------------
+```
 
 ### 2. Pre-Flight Diagnostics
 Checks Docker daemon, Docker Compose plugin, RAM, disk space, and network port availability:

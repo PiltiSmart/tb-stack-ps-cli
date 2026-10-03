@@ -2,7 +2,9 @@ package software
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -18,6 +20,7 @@ type Software struct {
 	Name          string       `json:"name"`
 	Category      string       `json:"category"`
 	Description   string       `json:"description"`
+	Version       string       `json:"version,omitempty"`
 	DefaultPorts  []string     `json:"ports"`
 	PortConfigs   []PortConfig `json:"port_configs"`
 	ContainerName string       `json:"container_name"`
@@ -34,6 +37,7 @@ var Registry = []Software{
 		Name:          "ThingsBoard Core Application",
 		Category:      "Core IoT",
 		Description:   "ThingsBoard enterprise IoT server & device orchestrator",
+		Version:       "v-4.1.2",
 		DefaultPorts:  []string{"8080 (Web UI)", "1883 (MQTT Broker)"},
 		PortConfigs: []PortConfig{
 			{Name: "Web UI", DefaultPort: 8080, Container: 8080, Protocol: "tcp"},
@@ -50,6 +54,7 @@ var Registry = []Software{
 		Name:          "TimescaleDB / PostgreSQL",
 		Category:      "Database",
 		Description:   "High-performance telemetry & relational time-series database",
+		Version:       "pg17",
 		DefaultPorts:  []string{"5432 (Postgres/Timescale)"},
 		PortConfigs: []PortConfig{
 			{Name: "TimescaleDB Storage", DefaultPort: 5432, Container: 5432, Protocol: "tcp"},
@@ -64,6 +69,7 @@ var Registry = []Software{
 		Name:          "ThingsBoard Edge Gateway",
 		Category:      "Edge Computing",
 		Description:   "Local autonomous ThingsBoard Edge instance for remote sites",
+		Version:       "3.9.1EDGE",
 		DefaultPorts:  []string{"8082 (Web UI)", "1884 (MQTT Broker)"},
 		PortConfigs: []PortConfig{
 			{Name: "Edge Web UI", DefaultPort: 8082, Container: 8080, Protocol: "tcp"},
@@ -79,6 +85,7 @@ var Registry = []Software{
 		Name:          "Jenkins CI/CD Automation",
 		Category:      "DevOps & CI/CD",
 		Description:   "Automated build, test, and release controller engine",
+		Version:       "lts",
 		DefaultPorts:  []string{"8085 (Web UI)", "50000 (Agent Listener)"},
 		PortConfigs: []PortConfig{
 			{Name: "Jenkins Web UI", DefaultPort: 8085, Container: 8080, Protocol: "tcp"},
@@ -94,6 +101,7 @@ var Registry = []Software{
 		Name:          "PiltiSmart Microservices",
 		Category:      "Backend Services",
 		Description:   "Modular PiltiSmart specialized API backend services",
+		Version:       "v7.10.7",
 		DefaultPorts:  []string{"9000 (Web/API Gateway)"},
 		PortConfigs: []PortConfig{
 			{Name: "API Gateway", DefaultPort: 9000, Container: 80, Protocol: "tcp"},
@@ -109,6 +117,7 @@ var Registry = []Software{
 		Name:          "Apache Kafka Broker",
 		Category:      "Message Streaming",
 		Description:   "KRaft-based distributed event streaming & message broker",
+		Version:       "4.1.1",
 		DefaultPorts:  []string{"9092 (PLAINTEXT Broker)"},
 		PortConfigs: []PortConfig{
 			{Name: "Kafka PLAINTEXT Broker", DefaultPort: 9092, Container: 9092, Protocol: "tcp"},
@@ -123,6 +132,7 @@ var Registry = []Software{
 		Name:          "PulseX Cloud Gateway",
 		Category:      "Cloud Platform",
 		Description:   "Hybrid cloud synchronization connector and remote tunnel (PulseX / PMX)",
+		Version:       "v8.4.41",
 		DefaultPorts:  []string{"8088 (PulseX Cloud Gateway)"},
 		PortConfigs: []PortConfig{
 			{Name: "PulseX Gateway", DefaultPort: 8088, Container: 80, Protocol: "tcp"},
@@ -198,4 +208,65 @@ func CheckStatus(s *Software) string {
 	default:
 		return strings.ToUpper(status)
 	}
+}
+
+// GetVersion returns the runtime container version or configured default version for a software.
+func GetVersion(s *Software) string {
+	// 1. Inspect live container image tag
+	cmd := exec.Command("docker", "inspect", "--format", "{{.Config.Image}}", s.ContainerName)
+	if out, err := cmd.Output(); err == nil {
+		img := strings.TrimSpace(string(out))
+		if img != "" {
+			parts := strings.Split(img, ":")
+			if len(parts) > 1 {
+				return parts[len(parts)-1]
+			}
+			return img
+		}
+	}
+
+	// For pulseX, also check legacy container name piltiCloud
+	if s.ID == "pulseX" {
+		cmdOld := exec.Command("docker", "inspect", "--format", "{{.Config.Image}}", "piltiCloud")
+		if outOld, errOld := cmdOld.Output(); errOld == nil {
+			img := strings.TrimSpace(string(outOld))
+			if img != "" {
+				parts := strings.Split(img, ":")
+				if len(parts) > 1 {
+					return parts[len(parts)-1]
+				}
+				return img
+			}
+		}
+	}
+
+	// 2. Check docker-compose.yml in default directory if present
+	targetDir := filepath.Join("/opt/piltismart", s.Subdir)
+	composePath := filepath.Join(targetDir, "docker-compose.yml")
+	if data, err := os.ReadFile(composePath); err == nil {
+		lines := strings.Split(string(data), "\n")
+		for _, line := range lines {
+			trimmed := strings.TrimSpace(line)
+			if strings.HasPrefix(trimmed, "image:") {
+				parts := strings.Split(trimmed, ":")
+				if len(parts) >= 3 {
+					return strings.TrimSpace(parts[2])
+				} else if len(parts) == 2 {
+					return strings.TrimSpace(parts[1])
+				}
+			}
+		}
+	}
+
+	// 3. Fallback to registry Version or DefaultImage tag
+	if s.Version != "" {
+		return s.Version
+	}
+	if s.DefaultImage != "" {
+		parts := strings.Split(s.DefaultImage, ":")
+		if len(parts) > 1 {
+			return parts[len(parts)-1]
+		}
+	}
+	return "latest"
 }
