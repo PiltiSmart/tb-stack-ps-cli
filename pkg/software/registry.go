@@ -25,6 +25,7 @@ type Software struct {
 	Dependencies  []string     `json:"dependencies"`
 	DefaultImage  string       `json:"default_image"`
 	Aliases       []string     `json:"aliases"`
+	EnvFile       string       `json:"env_file,omitempty"`
 }
 
 var Registry = []Software{
@@ -42,6 +43,7 @@ var Registry = []Software{
 		Subdir:        "tb-app",
 		Dependencies:  []string{"tb-db"},
 		DefaultImage:  "piltismartsolutions/thingsboard-3.8.1:v-4.1.2",
+		EnvFile:       ".tb.env",
 	},
 	{
 		ID:            "tb-db",
@@ -100,6 +102,7 @@ var Registry = []Software{
 		Subdir:        "piltiservices",
 		Dependencies:  nil,
 		DefaultImage:  "piltismartsolutions/piltiservices:v7.10.7",
+		EnvFile:       ".piltiservices.env",
 	},
 	{
 		ID:            "kafka",
@@ -129,6 +132,7 @@ var Registry = []Software{
 		Dependencies:  nil,
 		DefaultImage:  "piltismartsolutions/pilticloud:v8.4.41",
 		Aliases:       []string{"pulsex", "pilticloud", "pmx", "cloud", "pilti-cloud"},
+		EnvFile:       ".pmx.env",
 	},
 }
 

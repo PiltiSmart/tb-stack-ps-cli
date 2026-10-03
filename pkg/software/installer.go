@@ -108,6 +108,12 @@ func InstallWithOptions(s *Software, opts InstallOptions) error {
 		return fmt.Errorf("failed to write templates for %s: %w", s.ID, err)
 	}
 
+	// Detect if .env / env_file is mentioned in docker compose
+	envFiles := DetectEnvFiles(targetDir, s)
+	if len(envFiles) > 0 {
+		DisplayEnvNoticeWhileInstalling(envFiles, targetDir)
+	}
+
 	// 4. Run docker compose up -d
 	ui.Info("Pulling and launching Docker container(s) for %s...", s.ID)
 	if err := runDockerCompose(targetDir, "up", "-d"); err != nil {
@@ -117,6 +123,11 @@ func InstallWithOptions(s *Software, opts InstallOptions) error {
 	time.Sleep(2 * time.Second)
 	currStatus := CheckStatus(s)
 	ui.Success("Software '%s' deployed successfully! Container Status: %s", s.Name, currStatus)
+
+	if len(envFiles) > 0 {
+		DisplayEnvNoticeInstallationDone(envFiles, targetDir, s.ID)
+	}
+
 	PrintSoftwareSummaryDetails(s, targetDir, configuredPorts, chosenVersion)
 	return nil
 }
@@ -268,6 +279,17 @@ func PrintSoftwareSummaryDetails(s *Software, targetDir string, configuredPorts 
 			fmt.Printf("  %-25s : %s%s%s\n", label, ui.ColorGreen, p, ui.ColorReset)
 		}
 	}
+
+	envFiles := DetectEnvFiles(targetDir, s)
+	if len(envFiles) > 0 {
+		fmt.Println("------------------------------------------------------------------")
+		for _, env := range envFiles {
+			fullPath := filepath.Join(targetDir, env)
+			fmt.Printf("  %-25s : %s%s%s\n", "Environment Config", ui.ColorYellow, ".env manually paste #installation is done plz update .env (infisical file)", ui.ColorReset)
+			fmt.Printf("  %-25s : %s%s%s\n", "Env File Path", ui.ColorBold, fullPath, ui.ColorReset)
+		}
+	}
+
 	fmt.Println("==================================================================")
 	fmt.Printf("Quick commands:\n")
 	fmt.Printf("  pilti %s status  -> Check status\n", s.ID)
@@ -275,6 +297,109 @@ func PrintSoftwareSummaryDetails(s *Software, targetDir string, configuredPorts 
 	fmt.Printf("  pilti %s restart -> Restart service\n", s.ID)
 	fmt.Printf("  pilti %s stop    -> Stop service\n", s.ID)
 	fmt.Println("==================================================================")
+}
+
+// DetectEnvFiles inspects docker-compose.yml, software definitions, and the target directory
+// to detect any environment files referenced in the compose configuration.
+func DetectEnvFiles(targetDir string, s *Software) []string {
+	var envFiles []string
+	seen := make(map[string]bool)
+
+	addFile := func(name string) {
+		name = strings.TrimSpace(name)
+		if name == "" {
+			return
+		}
+		base := filepath.Base(name)
+		if !seen[base] {
+			seen[base] = true
+			envFiles = append(envFiles, base)
+		}
+	}
+
+	// 1. Explicitly configured software env file
+	if s != nil && s.EnvFile != "" {
+		addFile(s.EnvFile)
+	}
+
+	// 2. Parse docker-compose.yml if present
+	composePath := filepath.Join(targetDir, "docker-compose.yml")
+	if data, err := os.ReadFile(composePath); err == nil {
+		content := string(data)
+		lines := strings.Split(content, "\n")
+		inEnvFileBlock := false
+		for _, line := range lines {
+			trimmed := strings.TrimSpace(line)
+			if strings.HasPrefix(trimmed, "env_file:") {
+				inEnvFileBlock = true
+				parts := strings.SplitN(trimmed, ":", 2)
+				if len(parts) == 2 {
+					val := strings.TrimSpace(parts[1])
+					val = strings.Trim(val, `"'[]`)
+					if val != "" && !strings.HasPrefix(val, "#") {
+						addFile(val)
+					}
+				}
+				continue
+			}
+			if inEnvFileBlock {
+				if strings.HasPrefix(trimmed, "- ") {
+					val := strings.TrimPrefix(trimmed, "- ")
+					val = strings.TrimSpace(val)
+					val = strings.Trim(val, `"'`)
+					if val != "" {
+						addFile(val)
+					}
+				} else if !strings.HasPrefix(line, " ") && !strings.HasPrefix(line, "\t") {
+					inEnvFileBlock = false
+				}
+			}
+		}
+
+		// Also check if .env is mentioned anywhere in the compose content
+		if len(envFiles) == 0 && (strings.Contains(content, "env_file") || strings.Contains(content, ".env")) {
+			addFile(".env")
+		}
+	}
+
+	// 3. Scan directory on disk for any .env* files
+	if entries, err := os.ReadDir(targetDir); err == nil {
+		for _, entry := range entries {
+			if !entry.IsDir() {
+				name := entry.Name()
+				if strings.HasPrefix(name, ".env") || strings.HasSuffix(name, ".env") || strings.Contains(name, ".env.") {
+					addFile(name)
+				}
+			}
+		}
+	}
+
+	return envFiles
+}
+
+// DisplayEnvNoticeWhileInstalling displays notice while installation is in progress.
+func DisplayEnvNoticeWhileInstalling(envFiles []string, targetDir string) {
+	fmt.Println()
+	fmt.Printf("%s%s▲ NOTICE: Environment configuration file detected in docker compose%s\n", ui.ColorBold, ui.ColorYellow, ui.ColorReset)
+	for _, env := range envFiles {
+		fullPath := filepath.Join(targetDir, env)
+		fmt.Printf("  %s%s.env manually paste%s %s(path: %s)%s\n", ui.ColorBold, ui.ColorCyan, ui.ColorReset, ui.ColorDim, fullPath, ui.ColorReset)
+	}
+	fmt.Println()
+}
+
+// DisplayEnvNoticeInstallationDone displays notice when installation is complete.
+func DisplayEnvNoticeInstallationDone(envFiles []string, targetDir string, softwareID string) {
+	fmt.Println()
+	fmt.Println("------------------------------------------------------------------")
+	fmt.Printf("%s%s🔔 [ENVIRONMENT CONFIGURATION REQUIRED]%s\n", ui.ColorBold, ui.ColorYellow, ui.ColorReset)
+	for _, env := range envFiles {
+		fullPath := filepath.Join(targetDir, env)
+		fmt.Printf("  %s%s.env manually paste #installation is done plz update .env (infisical file)%s\n", ui.ColorBold, ui.ColorYellow, ui.ColorReset)
+		fmt.Printf("  %s--> Target File :%s %s%s%s\n", ui.ColorCyan, ui.ColorReset, ui.ColorBold, fullPath, ui.ColorReset)
+	}
+	fmt.Printf("  %sAfter updating credentials, restart service: %spilti %s restart%s\n", ui.ColorDim, ui.ColorCyan, softwareID, ui.ColorReset)
+	fmt.Println("------------------------------------------------------------------")
 }
 
 func IsPortOccupied(port int) bool {

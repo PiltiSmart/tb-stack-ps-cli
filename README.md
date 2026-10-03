@@ -167,6 +167,17 @@ pilti pulseX install --version v8.4.41 --port 8088 -y
 pilti tb-app install --port 8080 -y
 ```
 
+### 8. Environment File Configuration Notice (`.env` / Infisical)
+Whenever a software references an environment file in `docker-compose.yml` (e.g., `tb-app` with `.tb.env`, `pulseX` with `.pmx.env`, `piltiservices` with `.piltiservices.env`), `pilti` displays alerts:
+- **During installation:** Notifies that `.env` is configured and displays `.env manually paste`.
+- **Upon completion:** Displays the alert banner:
+  ```text
+  🔔 [ENVIRONMENT CONFIGURATION REQUIRED]
+    .env manually paste #installation is done plz update .env (infisical file)
+    --> Target File : /opt/piltismart/softwares/pulsex/.pmx.env
+    After updating credentials, restart service: pilti pulseX restart
+  ```
+
 ---
 
 ## 🪣 AWS S3 Cloud Storage CLI (`pilti s3`)

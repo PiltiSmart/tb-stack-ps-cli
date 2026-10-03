@@ -71,10 +71,22 @@ func InstallTBStack(deployDir, repoURL string, edgeWebPort, edgeMqttPort int) er
 	// Step 4: Phase B - Deploy tb (ThingsBoard Core)
 	ui.Info("[Phase 2/3] Deploying ThingsBoard Core Application Stack (tb)...")
 	tbDir := filepath.Join(deployDir, "tb")
+	tbEnvPath := filepath.Join(tbDir, ".tb.env")
+
+	fmt.Println()
+	fmt.Printf("%s%s▲ NOTICE: Environment configuration file detected in docker compose%s\n", ui.ColorBold, ui.ColorYellow, ui.ColorReset)
+	fmt.Printf("  %s%s.env manually paste%s %s(path: %s)%s\n", ui.ColorBold, ui.ColorCyan, ui.ColorReset, ui.ColorDim, tbEnvPath, ui.ColorReset)
+	fmt.Println()
+
 	if err := runDockerComposeUp(tbDir, nil); err != nil {
 		return fmt.Errorf("failed to start tb: %w", err)
 	}
 	ui.Success("ThingsBoard Core container (Thingsboard-test) started!")
+
+	fmt.Println()
+	fmt.Printf("  %s%s.env manually paste #installation is done plz update .env (infisical file)%s\n", ui.ColorBold, ui.ColorYellow, ui.ColorReset)
+	fmt.Printf("  %s--> Target File :%s %s\n", ui.ColorCyan, ui.ColorReset, tbEnvPath)
+	fmt.Println()
 
 	// Step 5: Phase C - Deploy edge-tb (ThingsBoard Edge)
 	ui.Info("[Phase 3/3] Deploying ThingsBoard Edge Stack (edge-tb)...")
@@ -184,5 +196,8 @@ func PrintSummary(deployDir string, edgeWebPort, edgeMqttPort int) {
 	fmt.Printf("  %-30s : %sport %d%s\n", "ThingsBoard Edge MQTT Port", ui.ColorGreen, edgeMqttPort, ui.ColorReset)
 	fmt.Printf("  %-30s : %sport 5432 (user: your_postgres_user, db: thingsboard)%s\n", "TimescaleDB Storage Port", ui.ColorGreen, ui.ColorReset)
 	fmt.Printf("  %-30s : %s%s%s\n", "Deployment Directory", ui.ColorBold, deployDir, ui.ColorReset)
+	fmt.Println("------------------------------------------------------------------")
+	fmt.Printf("  %-30s : %s%s%s\n", "Environment Config", ui.ColorYellow, ".env manually paste #installation is done plz update .env (infisical file)", ui.ColorReset)
+	fmt.Printf("  %-30s : %s%s%s\n", "ThingsBoard Env Path", ui.ColorBold, filepath.Join(deployDir, "tb", ".tb.env"), ui.ColorReset)
 	fmt.Println("==================================================================")
 }
