@@ -30,6 +30,10 @@ func Install(s *Software, baseDir string) error {
 
 // InstallWithOptions provisions configuration with full interactive or parameterized options.
 func InstallWithOptions(s *Software, opts InstallOptions) error {
+	if s.ID == "pilti-nettools" {
+		return InstallNetTools(s, opts)
+	}
+
 	baseDir := opts.BaseDir
 	if baseDir == "" {
 		baseDir = DefaultBaseDir
@@ -157,6 +161,9 @@ func InstallWithOptions(s *Software, opts InstallOptions) error {
 
 // Start brings up the software container.
 func Start(s *Software, baseDir string) error {
+	if s.ID == "pilti-nettools" {
+		return RestartNetTools(s)
+	}
 	if baseDir == "" {
 		baseDir = DefaultBaseDir
 	}
@@ -173,6 +180,9 @@ func Start(s *Software, baseDir string) error {
 
 // Stop halts the software container.
 func Stop(s *Software, baseDir string) error {
+	if s.ID == "pilti-nettools" {
+		return StopNetTools(s)
+	}
 	if baseDir == "" {
 		baseDir = DefaultBaseDir
 	}
@@ -188,6 +198,9 @@ func Stop(s *Software, baseDir string) error {
 
 // Restart restarts the software container.
 func Restart(s *Software, baseDir string) error {
+	if s.ID == "pilti-nettools" {
+		return RestartNetTools(s)
+	}
 	if baseDir == "" {
 		baseDir = DefaultBaseDir
 	}
@@ -203,6 +216,9 @@ func Restart(s *Software, baseDir string) error {
 
 // Status prints the detailed runtime container status for a software.
 func Status(s *Software) error {
+	if s.ID == "pilti-nettools" {
+		return NetToolsStatus(s)
+	}
 	ui.PrintBanner(fmt.Sprintf("Software Status: %s", s.Name))
 	fmt.Printf("  - Software ID   : %s%s%s\n", ui.ColorCyan, s.ID, ui.ColorReset)
 	fmt.Printf("  - Container     : %s\n", s.ContainerName)
@@ -230,6 +246,11 @@ func Status(s *Software) error {
 
 // Logs streams or prints logs for the container.
 func Logs(s *Software, follow bool) error {
+	if s.ID == "pilti-nettools" {
+		ui.Info("pilti-nettools is a host-native diagnostic suite.")
+		ui.Info("To view SSH service logs, run: journalctl -u ssh (or sshd) -n 50")
+		return nil
+	}
 	args := []string{"logs"}
 	if follow {
 		args = append(args, "-f")
@@ -244,6 +265,9 @@ func Logs(s *Software, follow bool) error {
 
 // Remove tears down the container and associated resources.
 func Remove(s *Software, baseDir string) error {
+	if s.ID == "pilti-nettools" {
+		return RemoveNetTools(s)
+	}
 	if baseDir == "" {
 		baseDir = DefaultBaseDir
 	}

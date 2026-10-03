@@ -161,6 +161,22 @@ var Registry = []Software{
 		DefaultImage:  "quay.io/minio/minio:latest",
 		Aliases:       []string{"minio-server", "s3-server", "minio-storage"},
 	},
+	{
+		ID:            "pilti-nettools",
+		Name:          "Network & Diagnostic Suite",
+		Category:      "System & Networking",
+		Description:   "Enterprise networking, diagnostics, routing, socket & packet capture tools",
+		Version:       "v1.0.0",
+		DefaultPorts:  []string{"22 (SSH)"},
+		PortConfigs: []PortConfig{
+			{Name: "SSH Remote Access", DefaultPort: 22, Container: 22, Protocol: "tcp"},
+		},
+		ContainerName: "host-system",
+		Subdir:        "nettools",
+		Dependencies:  nil,
+		DefaultImage:  "system-native",
+		Aliases:       []string{"nettools", "net-tools", "piltinettools", "diagnostics", "network-tools"},
+	},
 }
 
 // GetSoftware looks up a software by ID (case-insensitive and alias-tolerant).
@@ -183,6 +199,8 @@ func GetSoftware(id string) (*Software, bool) {
 		norm = "jenkins"
 	} else if norm == "minio" || norm == "minio-server" || norm == "s3-server" || norm == "minio-storage" {
 		norm = "minio"
+	} else if norm == "pilti-nettools" || norm == "nettools" || norm == "net-tools" || norm == "piltinettools" || norm == "diagnostics" || norm == "network-tools" {
+		norm = "pilti-nettools"
 	}
 
 	for _, s := range Registry {
@@ -200,6 +218,10 @@ func GetSoftware(id string) (*Software, bool) {
 
 // CheckStatus returns RUNNING, STOPPED, or NOT INSTALLED for a given software.
 func CheckStatus(s *Software) string {
+	if s.ID == "pilti-nettools" {
+		return CheckNetToolsStatus()
+	}
+
 	// Query docker inspect for container status
 	cmd := exec.Command("docker", "inspect", "--format", "{{.State.Status}}", s.ContainerName)
 	out, err := cmd.Output()
@@ -231,6 +253,9 @@ func CheckStatus(s *Software) string {
 
 // GetVersion returns the runtime container version or configured default version for a software.
 func GetVersion(s *Software) string {
+	if s.ID == "pilti-nettools" {
+		return s.Version
+	}
 	// 1. Inspect live container image tag
 	cmd := exec.Command("docker", "inspect", "--format", "{{.Config.Image}}", s.ContainerName)
 	if out, err := cmd.Output(); err == nil {

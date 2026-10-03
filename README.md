@@ -52,6 +52,7 @@ All software components in the PiltiSmart catalog can be viewed live using `pilt
 | **[`kafka`](stacks/kafka/)** | Apache Kafka Broker | Message Streaming | `4.1.1` | `9092` | *None* | KRaft distributed event streaming & message broker |
 | **[`pulseX`](stacks/pulsex/)** | PulseX Cloud Gateway | Cloud Platform | `v8.4.41` *(Dynamic Git Selector)* | `8088` | *None* | Hybrid cloud synchronization connector & tunnel (PMX) |
 | **[`minio`](stacks/minio/)** | MinIO Object Storage | Cloud Storage | `latest` | `9000`, `9001` | *None* | High-performance S3-compatible object storage server & console |
+| **`pilti-nettools`** | Network & Diagnostic Tools | System & Network | `v1.0.0` | `22` (SSH) | *None* | Cross-distro enterprise network diagnostics, routing, sockets, packet capture & OpenSSH |
 
 ---
 
@@ -70,6 +71,7 @@ graph TD
         KF["Apache Kafka (kafka)"]
         PX["PulseX Cloud Gateway (pulseX)"]
         MN["MinIO S3 Storage (minio)"]
+        NT["Network & Diagnostic Suite (pilti-nettools)"]
     end
 ```
 
@@ -128,6 +130,10 @@ pilti install pulseX
 # MinIO S3-Compatible Object Storage Server
 pilti install minio
 # or: pilti minio install (also accepts alias: minio-server)
+
+# Enterprise Network & Diagnostics Suite (Cross-Distro Linux & Darwin)
+pilti install pilti-nettools
+# or: pilti pilti-nettools install (aliases: nettools, net-tools, diagnostics)
 ```
 
 ---
@@ -193,7 +199,36 @@ pilti <software-id> stop         # e.g., pilti minio stop
 pilti <software-id> remove       # e.g., pilti piltiservices remove
 ```
 
-### 4. Interactive Port Checking & Port Customization
+### 4. Cross-Distro Enterprise Network & Diagnostics Suite (`pilti-nettools`)
+`pilti-nettools` installs enterprise networking, diagnostics, routing, sockets, packet capture, and remote administration tools on the host system with automated distribution detection:
+
+```bash
+# Automated install on any Linux distro / macOS:
+pilti pilti-nettools install
+# or: pilti install pilti-nettools (aliases: nettools, net-tools, diagnostics)
+
+# Verify live status and path of every installed tool:
+pilti pilti-nettools status
+```
+
+**Supported Linux Distributions & Package Managers:**
+- **Debian / Ubuntu / Kali / Mint:** `apt-get` (`iproute2`, `net-tools`, `iputils-ping`, `dnsutils`, `curl`, `wget`, `traceroute`, `mtr-tiny`, `netcat-openbsd`, `socat`, `tcpdump`, `openssh-server`, `openssl`)
+- **RHEL / CentOS / Rocky Linux / AlmaLinux / Fedora:** `dnf` / `yum` (`iproute`, `net-tools`, `iputils`, `bind-utils`, `curl`, `wget`, `traceroute`, `mtr`, `nc`, `socat`, `tcpdump`, `openssh-server`, `openssl`)
+- **Alpine Linux:** `apk` (`iproute2`, `net-tools`, `iputils`, `bind-tools`, `curl`, `wget`, `traceroute`, `mtr`, `netcat-openbsd`, `socat`, `tcpdump`, `openssh`, `openssl`)
+- **Arch Linux / Manjaro:** `pacman` (`iproute2`, `net-tools`, `iputils`, `bind`, `curl`, `wget`, `traceroute`, `mtr`, `openbsd-netcat`, `socat`, `tcpdump`, `openssh`, `openssl`)
+- **openSUSE / SLES:** `zypper` (`iproute2`, `net-tools`, `iputils`, `bind-utils`, `curl`, `wget`, `traceroute`, `mtr`, `netcat-openbsd`, `socat`, `tcpdump`, `openssh`, `openssl`)
+- **macOS (Darwin):** `brew` (`curl`, `wget`, `mtr`, `socat`, `tcpdump`, `openssl`, etc.)
+
+**Diagnostic Binary Inventory:**
+- **Routing & Interfaces:** `ip`, `ss`, `netstat`, `ifconfig`
+- **DNS & Connectivity:** `ping`, `dig`, `nslookup`
+- **HTTP / Transfers:** `curl`, `wget`
+- **Hop & Packet Diagnostics:** `traceroute`, `mtr`, `tcpdump`
+- **Sockets & Relay:** `nc` (netcat), `socat`
+- **Security & Remote Access:** `ssh`, `sshd` (OpenSSH server automatically enabled & started), `openssl`
+
+
+### 5. Interactive Port Checking & Port Customization
 When installing any software, `pilti` automatically:
 1. Displays the default host port (e.g., `Default Port: 8088`).
 2. Prompts the technical user `Use this port? [Y/n]`.
@@ -205,13 +240,13 @@ For automated/scripted installs, pass `--port <number>` and `-y`:
 pilti pulseX install --port 8089 -y
 ```
 
-### 5. Dynamic GitHub Version Selector (`pulseX`)
+### 6. Dynamic GitHub Version Selector (`pulseX`)
 When installing `pulseX` (formerly `pilticloud`), `pilti` dynamically queries GitHub Releases and Docker registries to present all available release tags (e.g., `v8.4.41`, `v8.4.38`, `v8.4.4`, `latest`) in an interactive picker or accepts custom version tags:
 ```bash
 pilti pulseX install --version v8.4.41 -y
 ```
 
-### 6. Environment File Configuration Alerts (`.env` / Infisical)
+### 7. Environment File Configuration Alerts (`.env` / Infisical)
 Whenever a software uses an environment configuration file (such as `.tb.env`, `.pmx.env`, `.piltiservices.env`), `pilti` displays alerts:
 - **During installation:** Displays `.env manually paste`.
 - **Upon completion:** Displays an alert banner detailing the exact path to paste your secrets:
@@ -222,13 +257,13 @@ Whenever a software uses an environment configuration file (such as `.tb.env`, `
   After updating credentials, restart service: pilti pulseX restart
 ```
 
-### 7. Pre-Flight System Diagnostics
+### 8. Pre-Flight System Diagnostics
 Verifies Docker daemon status, Compose plugin, available RAM, disk capacity, and network ports:
 ```bash
 pilti doctor
 ```
 
-### 8. CLI Version & Runtime Info
+### 9. CLI Version & Runtime Info
 ```bash
 pilti version
 ```
