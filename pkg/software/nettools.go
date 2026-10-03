@@ -439,7 +439,7 @@ func NetToolsStatus(s *Software) error {
 }
 
 // RestartNetTools restarts sshd service if present.
-func RestartNetTools() error {
+func RestartNetTools(s *Software) error {
 	ui.Info("Restarting OpenSSH service...")
 	sudo := ""
 	if os.Geteuid() != 0 && hasCmd("sudo") {
@@ -462,7 +462,7 @@ func RestartNetTools() error {
 }
 
 // StopNetTools stops ssh service if running.
-func StopNetTools() error {
+func StopNetTools(s *Software) error {
 	ui.Info("Stopping OpenSSH service...")
 	sudo := ""
 	if os.Geteuid() != 0 && hasCmd("sudo") {
@@ -480,7 +480,7 @@ func StopNetTools() error {
 }
 
 // RemoveNetTools displays instructions or executes package purge.
-func RemoveNetTools() error {
+func RemoveNetTools(s *Software) error {
 	distro := DetectDistroAndPackageManager()
 	ui.PrintBanner("PiltiSmart Network Tools Removal")
 	ui.Warning("Network tools (curl, ip, openssh, etc.) are core system utilities.")
