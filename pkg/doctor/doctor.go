@@ -131,7 +131,8 @@ func RunDiagnostics() bool {
 		{1884, "tb-edge (ThingsBoard Edge MQTT)"},
 		{8085, "jenkins (Jenkins Web UI)"},
 		{50000, "jenkins (Jenkins Agent Listener)"},
-		{9000, "piltiservices (API Gateway)"},
+		{9000, "piltiservices (API Gateway) / minio (S3 API)"},
+		{9001, "minio (MinIO Web Console)"},
 		{9092, "kafka (Apache Kafka PLAINTEXT Broker)"},
 		{8088, "pulseX (PulseX Cloud Gateway / PMX)"},
 	}

@@ -144,6 +144,23 @@ var Registry = []Software{
 		Aliases:       []string{"pulsex", "pilticloud", "pmx", "cloud", "pilti-cloud"},
 		EnvFile:       ".pmx.env",
 	},
+	{
+		ID:            "minio",
+		Name:          "MinIO Object Storage",
+		Category:      "Cloud Storage",
+		Description:   "High-performance S3-compatible distributed object storage server",
+		Version:       "latest",
+		DefaultPorts:  []string{"9000 (S3 API)", "9001 (Web Console)"},
+		PortConfigs: []PortConfig{
+			{Name: "MinIO S3 API", DefaultPort: 9000, Container: 9000, Protocol: "tcp"},
+			{Name: "MinIO Web Console", DefaultPort: 9001, Container: 9001, Protocol: "tcp"},
+		},
+		ContainerName: "minio",
+		Subdir:        "minio",
+		Dependencies:  nil,
+		DefaultImage:  "quay.io/minio/minio:latest",
+		Aliases:       []string{"minio-server", "s3-server", "minio-storage"},
+	},
 }
 
 // GetSoftware looks up a software by ID (case-insensitive and alias-tolerant).
@@ -164,6 +181,8 @@ func GetSoftware(id string) (*Software, bool) {
 		norm = "kafka"
 	} else if norm == "ci" || norm == "pilti-jenkins" {
 		norm = "jenkins"
+	} else if norm == "minio" || norm == "minio-server" || norm == "s3-server" || norm == "minio-storage" {
+		norm = "minio"
 	}
 
 	for _, s := range Registry {

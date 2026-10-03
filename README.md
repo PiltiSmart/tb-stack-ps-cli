@@ -9,6 +9,7 @@ A standalone, zero-dependency CLI written in **Go** using the **Cobra Framework*
 5. `piltiservices` : PiltiSmart Microservices Backend
 6. `kafka` : Apache Kafka Distributed Streaming Broker
 7. `pulseX` : PulseX Cloud Gateway & Sync Tunnel (PMX - formerly `pilticloud`)
+8. `minio` : MinIO S3-Compatible Object Storage Server
 
 ---
 
@@ -55,6 +56,7 @@ sudo chmod +x /usr/local/bin/pilti
 | **[`piltiservices`](stacks/piltiservices/)** | PiltiSmart Microservices | `v7.10.7` | `9000:80` | *None* | Specialized API microservices backend |
 | **[`kafka`](stacks/kafka/)** | Apache Kafka Broker | `4.1.1` | `9092` | *None* | KRaft distributed event streaming broker |
 | **[`pulseX`](stacks/pulsex/)** | PulseX Cloud Gateway | `v8.4.41` (dynamic selector) | `8088:80` | *None* | Hybrid cloud connector (PMX / formerly PiltiCloud) |
+| **[`minio`](stacks/minio/)** | MinIO Object Storage | `latest` | `9000`, `9001` | *None* | High-performance S3-compatible object storage server |
 
 ---
 
@@ -107,6 +109,10 @@ pilti install piltiservices
 pilti install pulseX
 # or: pilti install pilticloud
 # or: pilti pulseX install
+
+# MinIO S3-Compatible Object Storage Server
+pilti install minio
+# or: pilti minio install
 ```
 
 ---
@@ -128,6 +134,7 @@ jenkins        Jenkins CI/CD Automation     DevOps & CI/CD   lts           8085,
 piltiservices  PiltiSmart Microservices     Backend Services v7.10.7       9000               NOT INSTALLED
 kafka          Apache Kafka Broker          Message Stream.. 4.1.1         9092               NOT INSTALLED
 pulseX         PulseX Cloud Gateway         Cloud Platform   v8.4.41       8088               RUNNING
+minio          MinIO Object Storage         Cloud Storage    latest        9000, 9001         RUNNING
 ------------------------------------------------------------------------------------------------------------
 ```
 
@@ -144,6 +151,7 @@ pilti tb-app status     # Specific service status
 pilti jenkins status
 pilti kafka status
 pilti pulseX status
+pilti minio status
 ```
 
 ### 4. Stream Service Logs
@@ -153,6 +161,7 @@ pilti jenkins logs -f
 pilti kafka logs -f
 pilti piltiservices logs -f
 pilti pulseX logs -f
+pilti minio logs -f
 ```
 
 ### 5. Restart, Stop, or Remove Services
@@ -160,7 +169,8 @@ pilti pulseX logs -f
 pilti tb-db restart
 pilti kafka restart
 pilti pulseX restart
-pilti pulseX stop
+pilti minio restart
+pilti minio stop
 pilti jenkins remove
 ```
 

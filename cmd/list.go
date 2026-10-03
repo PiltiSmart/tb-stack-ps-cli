@@ -20,7 +20,8 @@ var listCmd = &cobra.Command{
   - jenkins       (Jenkins CI/CD Engine)
   - piltiservices (PiltiSmart Microservices)
   - kafka         (Apache Kafka Broker)
-  - pulseX        (PulseX Cloud Gateway / PMX - formerly PiltiCloud)`,
+  - pulseX        (PulseX Cloud Gateway / PMX - formerly PiltiCloud)
+  - minio         (MinIO S3-Compatible Object Storage)`,
 	Run: func(cmd *cobra.Command, args []string) {
 		ui.PrintBanner("PiltiSmart Software Catalog")
 

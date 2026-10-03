@@ -36,6 +36,7 @@ Available software IDs:
   - kafka         (Apache Kafka Broker)
   - pulseX        (PulseX Cloud Gateway / PMX - formerly PiltiCloud)
   - pilticloud    (Alias for pulseX)
+  - minio         (MinIO S3-Compatible Object Storage)
   - all           (Install all components)
   - tb-stack      (Legacy 3-component ThingsBoard stack)
 
@@ -45,7 +46,7 @@ Examples:
   pilti install kafka
   pilti install piltiservices
   pilti install pulseX
-  pilti install pilticloud
+  pilti install minio
   pilti install             # Interactive selection wizard`,
 	Args: cobra.MaximumNArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {

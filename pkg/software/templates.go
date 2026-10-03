@@ -172,6 +172,24 @@ INFISICAL_ENV=test
 KAFKA_SERVER=localhost:9092
 `
 
+const RawMinioCompose = `version: '3.7'
+
+services:
+  minio:
+    image: quay.io/minio/minio:{{VERSION}}
+    container_name: minio
+    restart: always
+    ports:
+      - "{{API_PORT}}:9000"
+      - "{{CONSOLE_PORT}}:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    volumes:
+      - ./minio/data:/data
+    command: server /data --console-address ":9001"
+`
+
 // Aliases for backwards compatibility
 const RawPiltiCloudCompose = RawPulseXCompose
 const RawPiltiCloudEnv = RawPulseXEnv
@@ -283,6 +301,30 @@ func WriteConfiguredTemplates(s *Software, targetDir string, ports map[string]in
 		if err := os.WriteFile(filepath.Join(targetDir, ".pmx.env"), []byte(RawPulseXEnv), 0644); err != nil {
 			return err
 		}
+	case "minio", "minio-server", "s3-server", "minio-storage":
+		version := "latest"
+		if customVersion != "" {
+			version = customVersion
+		}
+		apiPort := 9000
+		if p, ok := ports["MinIO S3 API"]; ok && p > 0 {
+			apiPort = p
+		}
+		consolePort := 9001
+		if p, ok := ports["MinIO Web Console"]; ok && p > 0 {
+			consolePort = p
+		}
+
+		compose := strings.Replace(RawMinioCompose, "{{VERSION}}", version, 1)
+		compose = strings.Replace(compose, "{{API_PORT}}", strconv.Itoa(apiPort), 1)
+		compose = strings.Replace(compose, "{{CONSOLE_PORT}}", strconv.Itoa(consolePort), 1)
+
+		if err := os.WriteFile(filepath.Join(targetDir, "docker-compose.yml"), []byte(compose), 0644); err != nil {
+			return err
+		}
+		dataDir := filepath.Join(targetDir, "minio", "data")
+		_ = os.MkdirAll(dataDir, 0777)
+		_ = os.Chmod(dataDir, 0777)
 	default:
 		return fmt.Errorf("unknown software template ID: %s", s.ID)
 	}
