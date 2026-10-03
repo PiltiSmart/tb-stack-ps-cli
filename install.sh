@@ -78,7 +78,7 @@ DOWNLOAD_URL="https://github.com/${REPO}/releases/latest/download/${RELEASE_BINA
 echo -e "${CYAN}[1/3] Fetching '${BINARY_NAME}' for ${PLATFORM}/${TARGET_ARCH}...${NC}"
 
 DOWNLOAD_SUCCESS=0
-if curl -sLf "${DOWNLOAD_URL}" -o "${TMP_DIR}/${BINARY_NAME}"; then
+if curl -fL -4 --connect-timeout 10 --retry 3 --retry-delay 1 --progress-bar "${DOWNLOAD_URL}" -o "${TMP_DIR}/${BINARY_NAME}"; then
     DOWNLOAD_SUCCESS=1
 else
     echo -e "${YELLOW}[!] Pre-compiled binary not yet found on GitHub Releases.${NC}"
@@ -125,7 +125,7 @@ esac
 if [ -n "${MC_FILE}" ]; then
     MC_URL="https://github.com/minio/mc/releases/download/${MC_VERSION}/${MC_FILE}"
     echo -e "${CYAN}[i] Downloading 'mc' from: ${MC_URL}...${NC}"
-    if curl -sSLf "${MC_URL}" -o "${TMP_DIR}/mc"; then
+    if curl -fL -4 --connect-timeout 10 --retry 3 --retry-delay 1 --progress-bar "${MC_URL}" -o "${TMP_DIR}/mc"; then
         chmod +x "${TMP_DIR}/mc"
         ${SUDO} cp "${TMP_DIR}/mc" "${INSTALL_DIR}/mc"
         ${SUDO} chmod +x "${INSTALL_DIR}/mc"
