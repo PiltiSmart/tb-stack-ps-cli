@@ -244,21 +244,28 @@ pilti version
 pilti s3 --help
 ```
 
-### Interactive MinIO S3 Connection (`pilti s3 ls`)
-Running `pilti s3 ls` interactively prompts for:
-1. **Server IP or Hostname** (default: `localhost`)
-2. **Server Port** (displays `Default Port: 9000` first, then asks `[Y/n]` or accepts custom port)
-3. **Access Key / Username** (default: `minioadmin`)
-4. **Secret Key / Password** (default: `minioadmin123`)
+### S3 Connection & Persistent Configuration
+`pilti s3` automatically remembers your MinIO / S3 connection settings in `~/.pilti/s3_config.json`:
+- **First-Time Setup**: On the first run, `pilti` prompts for your server IP/hostname, port, and credentials. Once entered, the configuration is saved permanently.
+- **Subsequent Runs**: `pilti s3 ls`, `pilti s3 cp`, `pilti s3 mb`, and all other S3 commands run **immediately with zero prompts**.
+- **Updating Connection via Flags**: Whenever you need to change your server IP, port, or credentials, pass CLI flags. The CLI immediately updates your saved connection and executes:
+  ```bash
+  # Update connection via flags (saves automatically, zero prompts)
+  pilti s3 ls --host 145.241.237.108 --port 9000 -u minioadmin -p minioadmin123
 
-For scripted connections:
-```bash
-# Connect to specific host & port
-pilti s3 ls --host 192.168.1.100 --port 9000 -u minioadmin -p minioadmin123
-
-# Fast-connect with local defaults without interactive prompts
-pilti s3 ls -y
-```
+  # Or configure using the setup subcommand
+  pilti s3 setup --host 145.241.237.108 --port 9000 -u minioadmin -p minioadmin123
+  ```
+- **Interactive Reconfiguration**: To re-launch the interactive connection prompt at any time:
+  ```bash
+  pilti s3 ls --reconfigure
+  # or
+  pilti s3 setup
+  ```
+- **View Active Settings**:
+  ```bash
+  pilti s3 config
+  ```
 
 ### S3 Command Reference
 

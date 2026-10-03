@@ -57,16 +57,17 @@ func printS3Help() {
 }
 
 var (
-	s3LsHost     string
-	s3LsPort     int
-	s3LsUser     string
-	s3LsPassword string
-	s3LsAutoYes  bool
+	s3LsHost        string
+	s3LsPort        int
+	s3LsUser        string
+	s3LsPassword    string
+	s3LsAutoYes     bool
+	s3LsReconfigure bool
 )
 
-// executeMC prepares mc and executes the command with default configuration
+// executeMC prepares mc and executes the command with active configuration
 func executeMC(mcCmd string, args ...string) error {
-	return executeMCWithConfig(s3.GetDefaultConfig(), mcCmd, args...)
+	return executeMCWithConfig(s3.GetActiveConfig(), mcCmd, args...)
 }
 
 // executeMCWithConfig prepares mc with the specified configuration and executes the command
@@ -84,18 +85,18 @@ func executeMCWithConfig(cfg *s3.Config, mcCmd string, args ...string) error {
 // pilti s3 ls [target]
 var s3LsCmd = &cobra.Command{
 	Use:   "ls [target]",
-	Short: "List S3 buckets or objects inside a bucket (prompts for server IP, port & credentials)",
+	Short: "List S3 buckets or objects inside a bucket",
 	Long: `List S3 buckets or objects inside a bucket.
-Prompts for MinIO / S3 Server IP, Port (displays default port 9000 first), Username, and Password.
-Can also be passed non-interactively via flags (--host, --port, --user, --password, -y).
+Uses the configured MinIO / S3 Server automatically without re-prompting.
+To update connection settings, pass flags (--host, --port, -u, -p) or use --reconfigure.
 
 Examples:
   pilti s3 ls
   pilti s3 ls s3://mybucket
   pilti s3 ls --host 192.168.1.100 --port 9000 -u minioadmin -p minioadmin123
-  pilti s3 ls -y`,
+  pilti s3 ls --reconfigure`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cfg := s3.ResolveServerConfig(s3LsHost, s3LsPort, s3LsUser, s3LsPassword, s3LsAutoYes)
+		cfg := s3.ResolveServerConfig(s3LsHost, s3LsPort, s3LsUser, s3LsPassword, s3LsAutoYes, s3LsReconfigure)
 		target := cfg.Alias
 		if len(args) > 0 && args[0] != "" {
 			target = s3.NormalizePath(args[0], cfg.Alias)
@@ -256,13 +257,35 @@ var s3SyncCmd = &cobra.Command{
 	},
 }
 
+var (
+	s3SetupHost     string
+	s3SetupPort     int
+	s3SetupUser     string
+	s3SetupPassword string
+	s3SetupAutoYes  bool
+)
+
 // pilti s3 setup
 var s3SetupCmd = &cobra.Command{
 	Use:   "setup",
-	Short: "Verify or install MinIO client ('mc') and configure alias",
+	Short: "Configure or update MinIO S3 connection settings and install 'mc'",
+	Long: `Verify or install MinIO client ('mc') and configure S3 connection settings.
+Can be run interactively or with flags (--host, --port, -u, -p, -y).
+
+Examples:
+  pilti s3 setup
+  pilti s3 setup --host 145.241.237.108 --port 9000 -u minioadmin -p minioadmin123
+  pilti s3 setup -y`,
 	Run: func(cmd *cobra.Command, args []string) {
-		cfg := s3.GetDefaultConfig()
 		ui.PrintBanner("PiltiSmart S3 / MinIO Environment Setup")
+
+		var cfg *s3.Config
+		if s3SetupHost != "" || s3SetupPort != 0 || s3SetupUser != "" || s3SetupPassword != "" {
+			cfg = s3.ResolveServerConfig(s3SetupHost, s3SetupPort, s3SetupUser, s3SetupPassword, s3SetupAutoYes, false)
+		} else {
+			cfg = s3.ResolveServerConfig("", 0, "", "", s3SetupAutoYes, true)
+		}
+
 		ui.Info("Target Endpoint : %s", cfg.Endpoint)
 		ui.Info("MinIO Alias     : %s", cfg.Alias)
 		ui.Info("Access Key      : %s", cfg.AccessKey)
@@ -295,7 +318,7 @@ var s3ConfigCmd = &cobra.Command{
 	Use:   "config",
 	Short: "Display active MinIO endpoint and credential settings",
 	Run: func(cmd *cobra.Command, args []string) {
-		cfg := s3.GetDefaultConfig()
+		cfg := s3.GetActiveConfig()
 		fmt.Println("==================================================================")
 		fmt.Println("  PiltiSmart S3 / MinIO Configuration")
 		fmt.Println("==================================================================")
@@ -303,6 +326,11 @@ var s3ConfigCmd = &cobra.Command{
 		fmt.Printf("  Default Alias  : %s\n", cfg.Alias)
 		fmt.Printf("  Access Key     : %s\n", cfg.AccessKey)
 		fmt.Printf("  Secret Key     : %s\n", "******** (configured)")
+		if s3.HasSavedConfig() {
+			fmt.Printf("  Config File    : %s\n", s3.GetConfigFilePath())
+		} else {
+			fmt.Println("  Config File    : Not yet saved (using defaults)")
+		}
 		mcPath := s3.FindMCExecutable()
 		if mcPath != "" {
 			fmt.Printf("  mc Binary Path : %s\n", mcPath)
@@ -310,6 +338,10 @@ var s3ConfigCmd = &cobra.Command{
 			fmt.Println("  mc Binary Path : Not installed (will auto-install on first run)")
 		}
 		fmt.Println("==================================================================")
+		fmt.Println("\nTo update connection settings:")
+		fmt.Println("  • Run: pilti s3 setup")
+		fmt.Println("  • Or pass flags: pilti s3 ls --host <ip> --port <port> -u <user> -p <pass>")
+		fmt.Println()
 	},
 }
 
@@ -322,9 +354,16 @@ func init() {
 
 	s3LsCmd.Flags().StringVarP(&s3LsHost, "host", "H", "", "MinIO / S3 Server IP or Hostname")
 	s3LsCmd.Flags().IntVarP(&s3LsPort, "port", "P", 0, "MinIO / S3 Server Port (default 9000)")
-	s3LsCmd.Flags().StringVarP(&s3LsUser, "user", "u", "", "MinIO Access Key / Username (default minioadmin)")
-	s3LsCmd.Flags().StringVarP(&s3LsPassword, "password", "p", "", "MinIO Secret Key / Password (default minioadmin123)")
+	s3LsCmd.Flags().StringVarP(&s3LsUser, "user", "u", "", "MinIO Access Key / Username")
+	s3LsCmd.Flags().StringVarP(&s3LsPassword, "password", "p", "", "MinIO Secret Key / Password")
 	s3LsCmd.Flags().BoolVarP(&s3LsAutoYes, "yes", "y", false, "Use defaults without interactive prompt")
+	s3LsCmd.Flags().BoolVar(&s3LsReconfigure, "reconfigure", false, "Prompt interactively to reconfigure S3 connection")
+
+	s3SetupCmd.Flags().StringVarP(&s3SetupHost, "host", "H", "", "MinIO / S3 Server IP or Hostname")
+	s3SetupCmd.Flags().IntVarP(&s3SetupPort, "port", "P", 0, "MinIO / S3 Server Port (default 9000)")
+	s3SetupCmd.Flags().StringVarP(&s3SetupUser, "user", "u", "", "MinIO Access Key / Username")
+	s3SetupCmd.Flags().StringVarP(&s3SetupPassword, "password", "p", "", "MinIO Secret Key / Password")
+	s3SetupCmd.Flags().BoolVarP(&s3SetupAutoYes, "yes", "y", false, "Use defaults without interactive prompt")
 
 	s3Cmd.AddCommand(s3LsCmd)
 	s3Cmd.AddCommand(s3MbCmd)

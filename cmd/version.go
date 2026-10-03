@@ -14,7 +14,7 @@ var versionCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ui.PrintBanner("PiltiSmart Enterprise CLI (pilti)")
 		fmt.Printf("  - CLI Binary    : %spilti%s\n", ui.ColorCyan, ui.ColorReset)
-		fmt.Printf("  - CLI Version   : %s2.1.0 (Enterprise Software & Cloud Suite)%s\n", ui.ColorGreen, ui.ColorReset)
+		fmt.Printf("  - CLI Version   : %s2.1.1 (Enterprise Software & Cloud Suite)%s\n", ui.ColorGreen, ui.ColorReset)
 		fmt.Printf("  - Framework     : Cobra v1.8.1\n")
 		fmt.Printf("  - Go Runtime    : %s\n", runtime.Version())
 		fmt.Printf("  - OS / Arch     : %s / %s\n\n", runtime.GOOS, runtime.GOARCH)
